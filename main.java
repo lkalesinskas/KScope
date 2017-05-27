@@ -3,11 +3,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Scanner;
 import java.util.Vector;
+
+import edu.wlu.cs.levy.CG.KDTree;
+import edu.wlu.cs.levy.CG.KeyDuplicateException;
+import edu.wlu.cs.levy.CG.KeySizeException;
 
 public class main {
 	public static int nmer = 0;
@@ -16,13 +19,13 @@ public class main {
 	public static int numShiftsMinus = 0;
 	public static int kmerToDo = 0;
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, KeySizeException, KeyDuplicateException {
 		kmerToDo = 3;
 		
 		// Files for Axis
-		File genome1 = new File("Genome1.fna");
-		File genome2 = new File("Genome2.fna");
-		File geneFile = new File("trainingData.txt");
+		File genome1 = new File("testGene.txt");
+		File genome2 = new File("testGene2.txt");
+		File geneFile = new File("trainFig900.txt");
 		// Getting sequence
 		String sequence1 = inputGenomeSequence(genome1);
 		String sequence2 = inputGenomeSequence(genome2);
@@ -37,17 +40,91 @@ public class main {
 		for (int i = 0; i < xAxis.length; i++) {
 			System.out.print(xAxis[i] + ", ");
 		}
-		
+		System.out.println();
 		//Inputs and Stores all genes in storage vector
-		Vector<Gene> storage = InputAndProcessGenes(geneFile);
+		System.out.println("Inputting Figgies");
+		Vector<Gene> storage = InputAndProcessGenesLine(geneFile);
+		System.out.println("Making KD Tree");
+	
+		KDTree test = new KDTree(2);
+		int intersectionCount = 0;
+		System.out.println("Correlating");
+		for (int i = 1; i<storage.size(); i++) {
+			double[] gene = storage.get(i).kmerVector.clone();
+			double[] gene2 = storage.get(i).kmerVector.clone();
+			double[] x = xAxis.clone();
+			double[] y = yAxis.clone();
+			//adding them to plane
+			Double a = getR(gene, x);
+			Double b = getR(gene2, y);
+			double[] coord = {a , b};
+			if (test.search(coord) == null) {
+				test.insert(coord, storage.get(i).Cog);
+			}
+			
+			if (test.search(coord) != null) {
+				//System.out.println(test.search(coord) + ", " + storage.get(i).Cog);
+				intersectionCount++;
+			}
+		}
+
+		System.out.println(test.size());
+		System.out.println(intersectionCount);
+		
+		
+		File testFile = new File("testFig100.txt");
+		Vector<Gene> testSequences = InputAndProcessGenesLine(testFile);
+		System.out.println("We have " + testSequences.size() + " test sequences!");
+		int miss = 0;
+		int hit = 0;
+		int nothingThere = 0;
+		int searchPositive = 0;
+		int searchNegative = 0;
+		for (int i = 2; i<testSequences.size(); i++) {
+			double[] gene = testSequences.get(i).kmerVector.clone();
+			double[] gene2 = testSequences.get(i).kmerVector.clone();
+			double[] x = xAxis.clone();
+			double[] y = yAxis.clone();
+			//adding them to plane
+			Double a = getR(gene, x);
+			Double b = getR(gene2, y);
+			double[] coord = {a , b};
+			if (test.search(coord)==null) {
+				if (test.nearest(coord).equals(testSequences.get(i).Cog)) {
+					searchPositive++;
+				}
+				else {
+					searchNegative++;
+				}
+			}
+			else if (test.search(coord).equals(testSequences.get(i).Cog)) {
+				hit++;
+			}
+			else if (test.search(coord).equals(testSequences.get(i).Cog)==false) {
+				miss++;
+			}
+
+		}
+		System.out.println("Hits: " + hit);
+		System.out.println("Misclassified" + miss);
+		System.out.println("Nothing there" + nothingThere);
+		System.out.println("Search Positive: " + searchPositive);
+		System.out.println("Search Negative: " + searchNegative);
+
+		
+		
+		System.exit(0);
+		
+		
 		
 		DiscoPlane plane = new DiscoPlane(10000);
 		
-		long startTime = System.currentTimeMillis();
+		//long startTime = System.currentTimeMillis();
 		//grab vectors (gene=gene2) from gene
 		//grab x and y
 		//correlate them and add them to plane
 		System.out.println();
+		PrintWriter out = new PrintWriter(new File("output.txt"));
 		for (int i = 1; i<storage.size(); i++) {
 			double[] gene = storage.get(i).kmerVector.clone();
 			double[] gene2 = storage.get(i).kmerVector.clone();
@@ -56,11 +133,13 @@ public class main {
 			//adding them to plane
 			BigDecimal b = new BigDecimal(getR(gene, x));
 			BigDecimal c = new BigDecimal(getR(gene2, y));
-			plane.placeSequence(new Point(b,c), storage.get(i).Cog);
+			out.println(storage.get(i).Cog + "," + b.toPlainString() + c.toPlainString());
+			//plane.placeSequence(new Point(b,c), storage.get(i).Cog);
 		}
-		long estimatedTime = System.currentTimeMillis() - startTime;
-		System.out.println(estimatedTime);
-		plane.checkLegos();
+		out.close();
+		//long estimatedTime = System.currentTimeMillis() - startTime;
+		//System.out.println(estimatedTime);
+		//plane.checkLegos();
 		
 		/*for (int i = 0; i < xAxis.length; i++) {
 			System.out.print(yAxis[i] + ", ");
@@ -76,7 +155,6 @@ public class main {
 				System.out.print(storage.get(i).kmerVector[j] + ", ");
 			}
 		}*/
-		System.exit(0);
 
 		/*
 		 * for (int q = 2; q<7; q++) { int kmerToDo = q; Vector<double[]>
@@ -109,6 +187,31 @@ public class main {
 		 * processSequencebyKmer(sequence2, i))); }
 		 */
 	}
+	
+	public static Vector<Gene> InputAndProcessGenesLine(File f) throws IOException {
+		boolean first = true;
+		String sequence = "";
+		Vector<Gene> storage = new Vector<Gene>();
+		String id = "";
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+		String line = "";
+		int count = 0;
+		while ((line = bufferedReader.readLine()) != null) {
+			id = line;
+			sequence = bufferedReader.readLine();
+			sequence = replaceNucs(sequence);
+			storage.add(new Gene(id.substring(id.indexOf("peg.")+4), processSequencebyKmer(sequence, kmerToDo)));
+			count++;
+			if (count>900000) {
+				break;
+			}
+			id = "";
+			sequence = "";
+		}
+		bufferedReader.close();
+		return storage;
+	}
+
 
 	public static Vector<Gene> InputAndProcessGenes(File f) throws IOException {
 		boolean first = true;
