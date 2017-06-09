@@ -1,3 +1,5 @@
+package KScope;
+
 
 public class DiscoPoint {
 	//private float x;
