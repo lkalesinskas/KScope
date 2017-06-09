@@ -11,6 +11,9 @@ public class Gene {
 	//  coordinates in the plane
 	public double x;
 	public double y;
+	public double z;
+	public double q;
+	public double r;
 	
 	public Gene (String coggie, double[] kmers) {
 		Cog = coggie;
