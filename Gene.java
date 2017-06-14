@@ -19,4 +19,10 @@ public class Gene {
 		Cog = coggie;
 		kmerVector = kmers;
 	}
+	
+	public Gene(String coggie, double x, double y){
+		Cog = coggie;
+		this.x = x;
+		this.y = y;
+	}
 }
