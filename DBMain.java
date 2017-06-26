@@ -22,7 +22,6 @@ import org.apache.commons.math3.stat.correlation.KendallsCorrelation;
 
 
 import edu.wlu.cs.levy.CG.KDTree;
-import edu.wlu.cs.levy.CG.KeyDuplicateException;
 import edu.wlu.cs.levy.CG.KeySizeException;
 
 /**
@@ -119,8 +118,6 @@ public class DBMain {
 		System.out.println("Inputting Figgies");
 		double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
 		double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
-		
-//		Vector<Gene> storage = InputAndProcessGenesLine(geneFile, parsedPCAX, parsedPCAY);
 		
 		System.out.println("Making DB Connection");
 		

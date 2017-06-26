@@ -30,7 +30,7 @@ import edu.wlu.cs.levy.CG.KeySizeException;
  *
  */
 public class main {
-	private static int TOTAL_VALS = 900000;
+	private static int TOTAL_VALS = 3000000;
 	public static int nmer = 0;
 	public static int kmerMax = 9;
 	public static int numShifts = 0;
@@ -40,7 +40,7 @@ public class main {
 	public static void main(String[] args) throws Exception {
 
 		// kmer size we are using
-		kmerToDo = 3;
+		kmerToDo = 4;
 
 		// Files for Axis
 		File genome1 = new File("Genomes\\Genome1.fna");
@@ -50,34 +50,34 @@ public class main {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("trainFig900.txt");
+		File geneFile = new File("TrainOut.ffn");
 
 		// Getting sequence
 		String sequence1 = inputGenomeSequence(genome1);
 		String sequence2 = inputGenomeSequence(genome2);
-		String sequence3 = inputGenomeSequence(genome3);  // z axis
+//		String sequence3 = inputGenomeSequence(genome3);  // z axis
 //		String sequence4 = inputGenomeSequence(genome4);  // q axis
 //		String sequence5 = inputGenomeSequence(genome5);  // r axis
 		// Gets KmerComposition Arrays of each Axis
 		double[] xAxis = processSequencebyKmer(sequence1, kmerToDo);
 		double[] yAxis = processSequencebyKmer(sequence2, kmerToDo);
-		double[] zAxis = processSequencebyKmer(sequence3, kmerToDo);
+//		double[] zAxis = processSequencebyKmer(sequence3, kmerToDo);
 //		double[] qAxis = processSequencebyKmer(sequence4, kmerToDo);
 //		double[] rAxis = processSequencebyKmer(sequence5, kmerToDo);
 
 		// ensure the kmer composition processing worked
-		for (int i = 0; i < xAxis.length; i++) {
-			System.out.print(yAxis[i] + ", ");
-		}
-		System.out.println();
-		for (int i = 0; i < xAxis.length; i++) {
-			System.out.print(xAxis[i] + ", ");
-		}
-		System.out.println();
-		for (int i = 0; i < zAxis.length; i++) {
-			System.out.print(zAxis[i] + ", ");
-		}
-		System.out.println();
+//		for (int i = 0; i < xAxis.length; i++) {
+//			System.out.print(yAxis[i] + ", ");
+//		}
+//		System.out.println();
+//		for (int i = 0; i < xAxis.length; i++) {
+//			System.out.print(xAxis[i] + ", ");
+//		}
+//		System.out.println();
+//		for (int i = 0; i < zAxis.length; i++) {
+//			System.out.print(zAxis[i] + ", ");
+//		}
+//		System.out.println();
 //		for (int i = 0; i < qAxis.length; i++) {
 //			System.out.print(qAxis[i] + ", ");
 //		}
@@ -89,28 +89,28 @@ public class main {
 		
 		// Inputs and Stores all genes in storage vector
 		System.out.println("Inputting Figgies");
-		Vector<Gene> storage = InputAndProcessGenesLine(geneFile);
+		Vector<Gene> storage = InputAndProcessGenesCategory(geneFile);
 		
 		System.out.println("Making KD Tree");
 
-		KDTree test = new KDTree(18);
-		HashMap<Integer, Integer> pegSet = new HashMap<Integer, Integer>();
+		KDTree test = new KDTree(2);
+		HashMap<String, Integer> pegSet = new HashMap<String, Integer>();
 		int inSet = 0;
 		int outSet = 0;
 		int intersectionCount = 0;
-		HashMap<Integer, List<Double[]>> clusterMap = new HashMap<Integer, List<Double[]>>();
+		HashMap<String, List<double[]>> clusterMap = new HashMap<String, List<double[]>>();
 		System.out.println("Correlating");
 		
 		//  reading equations
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("Equations.txt"));
+//		BufferedReader bufferedReader = new BufferedReader(new FileReader("Equations.txt"));
 		String line = "";
 		int count = 0;
 		List<double[]> equationList = new ArrayList<double[]>();
-		while ((line = bufferedReader.readLine()) != null) {
-			equationList.add(parsePCAText(line));
-		}
-		bufferedReader.close();
+//		while ((line = bufferedReader.readLine()) != null) {
+//			equationList.add(parsePCAText(line));
+//		}
+//		bufferedReader.close();
 		
 		
 		
@@ -118,32 +118,32 @@ public class main {
 
 			// storing the kmer composition of the gene
 			double[] gene = storage.get(i).kmerVector.clone();
-//			double[] gene2 = storage.get(i).kmerVector.clone();
+			double[] gene2 = storage.get(i).kmerVector.clone();
 //			double[] gene3 = storage.get(i).kmerVector.clone();
 //			double[] gene4 = storage.get(i).kmerVector.clone();
 //			double[] gene5 = storage.get(i).kmerVector.clone();
 
 			// clone the x and y axis
-//			double[] x = xAxis.clone();
-//			double[] y = yAxis.clone();
+			double[] x = xAxis.clone();
+			double[] y = yAxis.clone();
 //			double[] z = zAxis.clone();
 //			double[] q = qAxis.clone();
 //			double[] r = rAxis.clone();
 			// adding them to plane by storing them as a number
 			// adding them to plane
 			
-			Double[] coordArr = new Double[equationList.size()];
+//			Double[] coordArr = new Double[equationList.size()];
 			for(int v = 0; v < equationList.size(); v ++){
-				coordArr[v] = getPCAX(gene, equationList.get(v));
+//				coordArr[v] = getPCAX(gene, equationList.get(v));
 			}
 			
 			double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
 			double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
 			
-			Double a = getPCAX(gene, parsedPCAX);
-			Double b = getPCAY(gene, parsedPCAY);
-//			double a = getR(gene, x);
-//			double b = getR(gene2, y);
+//			Double a = getPCAX(gene, parsedPCAX);
+//			Double b = getPCAY(gene, parsedPCAY);
+			double a = getR(gene, x);
+			double b = getR(gene2, y);
 //			double c = getR(gene3, z);
 //			double d = getR(gene4, q);
 //			double e = getR(gene5, r);
@@ -154,20 +154,20 @@ public class main {
 //			storage.get(i).r = e;
 			
 			// turn the x and y from above into an ordered pair
-			Double[] coord1 = coordArr;
-			double[] coord = new double[coord1.length];
-			for(int c = 0; c < coord1.length; c ++){
-				coord[c] = coord1[c];
-			}
+//			Double[] coord1 = coordArr;
+//			double[] coord = new double[coord1.length];
+//			for(int c = 0; c < coord1.length; c ++){
+//				coord[c] = coord1[c];
+//			}
 			
-//			double[] coord = { a, b };
+			double[] coord = { a, b };
 			
-			if(!pegSet.containsKey(Integer.valueOf(getPeg(storage.get(i).Cog)))){
-				pegSet.put(Integer.valueOf(getPeg(storage.get(i).Cog)), 1);
+			if(!pegSet.containsKey(storage.get(i).Cog)){
+				pegSet.put(storage.get(i).Cog, 1);
 			}
 			else{
-				int whatever = pegSet.get(Integer.valueOf(getPeg(storage.get(i).Cog)));
-				pegSet.put(Integer.valueOf(getPeg(storage.get(i).Cog)), whatever + 1);
+				int whatever = pegSet.get(storage.get(i).Cog);
+				pegSet.put(storage.get(i).Cog, whatever + 1);
 			}
 
 			// if the coordinate isn't in the KDTree, insert into tree
@@ -176,20 +176,20 @@ public class main {
 
 				// if a point has a similar cog value then they are part of a
 				// cluster
-				int clusterkey = Integer.valueOf(getPeg(storage.get(i).Cog));
+				String clusterkey = storage.get(i).Cog;
 //				String clusterkey = storage.get(i).Cog;
 				if (clusterMap.containsKey(clusterkey)) {
-					clusterMap.get(clusterkey).add(new Double[] { a, b });
+					clusterMap.get(clusterkey).add(new double[] { a, b });
 				}
 				// if no cog value in the map
 				else {
-					clusterMap.put(clusterkey, new ArrayList<Double[]>());
-					clusterMap.get(clusterkey).add(coordArr);
+					clusterMap.put(clusterkey, new ArrayList<double[]>());
+					clusterMap.get(clusterkey).add(coord);
 				}
 			}
 
 			/*
-			 * TODO: go through and take the cog value and use it as a key for
+			 * DONE: go through and take the cog value and use it as a key for
 			 * an hmap. check to see if the cog is in an hmap. store any
 			 * coordinates in a list as the values being returned by the
 			 * hmap.get(key)
@@ -301,8 +301,8 @@ public class main {
 		/* DONE TRAINING MODEL */
 
 		// testing the file of the subset of figs
-		File testFile = new File("testFig100.txt");
-		Vector<Gene> testSequences = InputAndProcessGenesLine(testFile);
+		File testFile = new File("TestOut.ffn");
+		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
 		int miss = 0;
 		int hit = 0;
@@ -310,7 +310,7 @@ public class main {
 		int searchPositive = 0;
 		int searchNegative = 0;
 
-		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
+//		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
 //		PrintWriter pws = new PrintWriter(new File("Threshold_Small.csv"));
 //		PrintWriter pwm = new PrintWriter(new File("Threshold_Medium.csv"));
 		PrintWriter sameCogWriterSmall = new PrintWriter(new File("Same_Cogs_Small.csv"));
@@ -333,7 +333,7 @@ public class main {
 //		sb.append(',');
 //		sb.append("# of points with same CSV");
 		sb.append('\n');
-		pw.write(sb.toString());
+//		pw.write(sb.toString());
 //		pws.write(sb.toString());
 //		pwm.write("peg #, Other 0.0 - 0.01,");
 //		pwm.write('\n');
@@ -343,7 +343,7 @@ public class main {
 		// takes kmer vector and creates the kmer count
 		for (int i = 2; i < testSequences.size(); i++) {
 			double[] gene = testSequences.get(i).kmerVector.clone();
-//			double[] gene2 = testSequences.get(i).kmerVector.clone();
+			double[] gene2 = testSequences.get(i).kmerVector.clone();
 //			double[] gene3 = testSequences.get(i).kmerVector.clone();
 //			double[] gene4 = testSequences.get(i).kmerVector.clone();
 //			double[] gene5 = testSequences.get(i).kmerVector.clone();
@@ -355,36 +355,43 @@ public class main {
 			// adding them to plane
 			Double[] coordArr = new Double[equationList.size()];
 			for(int v = 0; v < equationList.size(); v ++){
-				coordArr[v] = getPCAX(gene, equationList.get(v));
+//				coordArr[v] = getPCAX(gene, equationList.get(v));
 			}
 			
-//			double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
-//			double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
+			double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
+			double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
 //			Double a = getPCAX(gene, parsedPCAX);
 //			Double b = getPCAY(gene, parsedPCAY);
+			Double a = getR(gene,x);
+			Double b = getR(gene2,y);
 //			Double c = getR(gene3, z);
 //			Double d = getR(gene4, q);
 //			Double e = getR(gene5, r);
-			Double[] coord1 = coordArr;
-			double[] coord = new double[coord1.length];
-			for(int c = 0; c < coord1.length; c ++){
-				coord[c] = coord1[c];
-			}
+//			Double[] coord1 = coordArr;
+//			double[] coord = new double[coord1.length];
+//			for(int c = 0; c < coord1.length; c ++){
+//				coord[c] = coord1[c];
+//			}
+			
+			double[] coord = new double[]{
+					a,b
+			};
 
+			if(a.isNaN() || b.isNaN()) continue;
 			// if it is not in the grid, look at the nearest one.
 			if (test.search(coord) == null) {
 				// if the classification is the same, then we are right
 				// otherwise we are wrong
-				if (getPeg(test.nearest(coord).toString()).equals(getPeg(testSequences.get(i).Cog))) {
+				if (test.nearest(coord).equals(testSequences.get(i).Cog)) {
 					searchPositive++;
 				} else {
 /**1  nearest correct classification  start    **/
 //					List<String> nearest = test.nearest(coord, 100);
 //					for(int a1 = 0; a1 < nearest.size(); a1 ++){
 ////						System.out.println("near stats " + nearest.get(q));
-//						if(getPeg(testSequences.get(i).Cog).equals(getPeg(nearest.get(a1)))){
+//						if(testSequences.get(i).Cog.equals(nearest.get(a1))){
 //							
-//							nearWriter.write(getPeg(nearest.get(a1)) + " , " + Integer.toString(a1 + 1));
+//							nearWriter.write(nearest.get(a1) + " , " + Integer.toString(a1 + 1));
 //							nearWriter.write('\n');
 //							
 //						}
@@ -399,8 +406,8 @@ public class main {
 					filenum ++;
 /**3		nearest point sequence simularity    **/
 					
-					if(pegSet.containsKey(Integer.valueOf(getPeg(testSequences.get(i).Cog)))){
-//						System.out.println(pegSet.get(Integer.valueOf(getPeg(testSequences.get(i).Cog))));
+					if(pegSet.containsKey(testSequences.get(i).Cog)){
+//						System.out.println(pegSet.get(testSequences.get(i).Cog));
 						inSet ++;
 					}
 					else outSet ++;
@@ -408,7 +415,7 @@ public class main {
 				}
 			}
 			// if we search and land on top of another coordinate
-			else if (getPeg(test.nearest(coord).toString()).equals(getPeg(testSequences.get(i).Cog))) {
+			else if (test.nearest(coord).toString().equals(testSequences.get(i).Cog)) {
 /**2     THRESHOLD p1 START   **/
 //				List<String> rangeVals = new ArrayList<String>();
 //				List<String> medVals = new ArrayList<String>();
@@ -419,17 +426,17 @@ public class main {
 ////				highVals = findThreshold(0.01, 0.1, test, coord);
 //				int sameCogSmall = 0;
 //				int sameCogMed = 0;
-//				pw.write(getPeg(testSequences.get(i).Cog));
-////				pws.write(getPeg(testSequences.get(i).Cog));
+//				pw.write(testSequences.get(i).Cog);
+////				pws.write(testSequences.get(i).Cog);
 ////				pws.write(',');
-////				pwm.write(getPeg(testSequences.get(i).Cog));
+////				pwm.write(testSequences.get(i).Cog);
 ////				pwm.write(',');
 //				for (String genes : rangeVals) {
-//					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+//					if (genes.equals(testSequences.get(i).Cog)) {
 //						sameCogSmall++;
 //					} else{
-////						pws.write(getPeg(genes) + ' ');
-//						pw.write(getPeg(genes) + ' ');
+////						pws.write(genes + ' ');
+//						pw.write(genes + ' ');
 //					}
 //
 //					
@@ -437,21 +444,21 @@ public class main {
 ////				pws.write(',');
 //				pw.write(',');
 //				for (String genes : medVals) {
-//					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+//					if (genes.equals(testSequences.get(i).Cog)) {
 //						sameCogMed++;
 //					} else{
-////						pwm.write(getPeg(genes) + ' ');
-//						pw.write(getPeg(genes) + ' ');
+////						pwm.write(genes + ' ');
+//						pw.write(genes + ' ');
 //					}
 //						
 //				}
 ////				pwm.write(',');
 //				pw.write(',');
 ////				for (String genes : highVals) {
-////					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+////					if (genes.equals(testSequences.get(i).Cog)) {
 ////						sameCog++;
 ////					} else
-////						pw.write(getPeg(genes) + ' ');
+////						pw.write(genes + ' ');
 ////				}
 ////				pw.write(',');
 //				
@@ -459,18 +466,20 @@ public class main {
 ////				pwm.write('\n');
 //				pw.write('\n');
 /**2       THRESHOLD p1 END     **/
-//				sameCogWriterSmall.write(getPeg(testSequences.get(i).Cog));
+//				sameCogWriterSmall.write(testSequences.get(i).Cog);
 //				sameCogWriterSmall.write(',');
-//				sameCogWriterSmall.write(Integer.toString(sameCogSmall));
+//				sameCogWriterSmall.write(sameCogSmall);
 //				sameCogWriterSmall.write('\n');
 //				
-//				sameCogWriterMed.write(getPeg(testSequences.get(i).Cog));
+//				sameCogWriterMed.write(testSequences.get(i).Cog);
 //				sameCogWriterMed.write(',');
-//				sameCogWriterMed.write(Integer.toString(sameCogMed));
+//				sameCogWriterMed.write(sameCogMed);
 //				sameCogWriterMed.write('\n');
 
 				hit++;
-			} else if (test.search(coord).equals(getPeg(testSequences.get(i).Cog)) == false) {
+			} else if (test.search(coord).equals(testSequences.get(i).Cog) == false) {
+				
+//				System.out.println("looking at " + test.search(coord) + " and using " + testSequences.get(i).Cog);
 				
 				
 /***2     THRESHOLD p2 START       **/
@@ -488,37 +497,37 @@ public class main {
 //				// sameCog ++;
 //				// }
 //				// }
-////				pws.write(getPeg(testSequences.get(i).Cog));
+////				pws.write(testSequences.get(i).Cog);
 ////				pws.write(',');
-////				pwm.write(getPeg(testSequences.get(i).Cog));
+////				pwm.write(testSequences.get(i).Cog);
 ////				pwm.write(',');
-//				pw.write(getPeg(testSequences.get(i).Cog));
+//				pw.write(testSequences.get(i).Cog);
 //				pw.write(',');
 //				for (String genes : rangeVals) {
-//					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+//					if (genes.equals(testSequences.get(i).Cog)) {
 //						sameCogSmall++;
 //					} else{
-////						pws.write(getPeg(genes) + ' ');
-//						pw.write(getPeg(genes) + ' ');
+////						pws.write(genes + ' ');
+//						pw.write(genes + ' ');
 //					}
 //				}
 ////				pws.write(',');
 //				pw.write(',');
 //				for (String genes : medVals) {
-//					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+//					if (genes.equals(testSequences.get(i).Cog)) {
 //						sameCogMed++;
 //					} else{
-////						pwm.write(getPeg(genes) + ' ');
-//						pw.write(getPeg(genes) + ' ');
+////						pwm.write(genes + ' ');
+//						pw.write(genes + ' ');
 //					}
 //				}
 ////				pwm.write(',');
 //				pw.write(',');
 ////				for (String genes : highVals) {
-////					if (getPeg(genes).equals(getPeg(testSequences.get(i).Cog))) {
+////					if (genes.equals(testSequences.get(i).Cog)) {
 ////						sameCog++;
 ////					} else
-////						pw.write(getPeg(genes) + ' ');
+////						pw.write(genes + ' ');
 ////				}
 //				pw.write(',');
 //				pw.write('\n');
@@ -528,14 +537,14 @@ public class main {
 ////				pwm.write('\n');
 
 /***2     THRESHOLD p2 END       **/
-//				sameCogWriterSmall.write(getPeg(testSequences.get(i).Cog));
+//				sameCogWriterSmall.write(testSequences.get(i).Cog);
 //				sameCogWriterSmall.write(',');
-//				sameCogWriterSmall.write(Integer.toString(sameCogSmall));
+//				sameCogWriterSmall.write(sameCogSmall);
 //				sameCogWriterSmall.write('\n');
 //				
-//				sameCogWriterMed.write(getPeg(testSequences.get(i).Cog));
+//				sameCogWriterMed.write(testSequences.get(i).Cog);
 //				sameCogWriterMed.write(',');
-//				sameCogWriterMed.write(Integer.toString(sameCogMed));
+//				sameCogWriterMed.write(sameCogMed);
 //				sameCogWriterMed.write('\n');
 				
 		
@@ -551,9 +560,9 @@ public class main {
 
 		}
 		// pw.write(sb.toString());
-		pw.close();
-//		pws.close();
-//		pwm.close();
+//		pw.close();
+		//pws.close();
+		//pwm.close();
 		sameCogWriterSmall.close();
 		sameCogWriterMed.close();
 		nearWriter.close();
@@ -769,7 +778,7 @@ public class main {
 		// TODO write out CSV file formatted peg #, same found, others in area
 		PrintWriter pw = new PrintWriter(new File(title + ".csv"));
 		StringBuilder sb = new StringBuilder();
-		sb.append(getPeg(gene.Cog));
+		sb.append(gene.Cog);
 		sb.append(',');
 		sb.append(sameCog);
 		sb.append(',');
@@ -959,8 +968,68 @@ public class main {
 
 		return centers;
 	}
+	
+	//
+	public static Vector<Gene> InputAndProcessGenesCategoryTest(File f) throws IOException{
+		boolean first = true;
+		String sequence = "";
+		Vector<Gene> storage = new Vector<Gene>();
+		String id = "";
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+		String line = "";
+		int count = 0;
+		while ((line = bufferedReader.readLine()) != null) {
+			id = line;
+			sequence = bufferedReader.readLine();
+			sequence = replaceNucs(sequence);
+			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
+				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
+				count++;
+			}
+			
+			
+			 if (count>100000) {
+//			if (count > 1000) {
+				break;
+			}
+			id = "";
+			sequence = "";
+		}
+		bufferedReader.close();
+		return storage;
+	}
 
 	//
+	public static Vector<Gene> InputAndProcessGenesCategory(File f) throws IOException{
+		boolean first = true;
+		String sequence = "";
+		Vector<Gene> storage = new Vector<Gene>();
+		String id = "";
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+		String line = "";
+		int count = 0;
+		while ((line = bufferedReader.readLine()) != null) {
+
+			id = line;
+			
+			sequence = bufferedReader.readLine();
+			sequence = replaceNucs(sequence);
+			if (!id.contains("hypothetical") || !id.contains("Hypothetical")) {
+				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
+				count++;
+			}
+			 if (count>TOTAL_VALS) {
+//			if (count > 1000) {
+				break;
+			}
+			id = "";
+			sequence = "";
+		}
+		bufferedReader.close();
+		return storage;
+	}
+	
+	
 	/**
 	 * looks through the file and takes in the gene sequences and
 	 * classifications

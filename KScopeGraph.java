@@ -221,7 +221,7 @@ public class KScopeGraph implements GlimpseLayoutProvider{
 //            float x = 6.0f * index / NUM_POINTS;
 //            float y = ( float ) ( Math.exp( x ) * 10.0 + r.nextDouble( ) * 500 );
 
-            colorValues.put( Integer.valueOf(getPeg(storage.get(i).Cog)));
+//            colorValues.put( storage.get(i).Cog) );
         }
         colorValues.rewind( );
 
