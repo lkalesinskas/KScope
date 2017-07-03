@@ -14,6 +14,9 @@ public class Gene {
 	public double z;
 	public double q;
 	public double r;
+	public double s;
+	public double t;
+	public double x2;
 	
 	public Gene (String coggie, double[] kmers) {
 		Cog = coggie;

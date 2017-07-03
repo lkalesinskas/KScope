@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -58,16 +59,13 @@ public class DBMain {
 		Connection con2 = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, username, pswd);
 		stmt = con2.createStatement();
 		
-		String sql = "CREATE TABLE IF NOT EXISTS figfam " +
-                "(id VARCHAR(255) not NULL, " +
-				" peg varchar(255) not NULL, " +
-                " x double, " + 
-                " y double, " + 
-                " PRIMARY KEY ( id ))"; 
-		stmt.executeUpdate(sql);
+		String sql = "CREATE TABLE IF NOT EXISTS PCA4merTesting " +
+				"(uid int not NULL, " +
+				" id varchar(255) not NULL, "+
+                " sequence varchar(255) not NULL,";
 
 		// kmer size we are using
-		kmerToDo = 3;
+		kmerToDo = 4;
 
 		// Files for Axis
 		File genome1 = new File("Genomes\\Genome1.fna");
@@ -77,7 +75,7 @@ public class DBMain {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("trainFig900.txt");
+		File geneFile = new File("TrainOut.ffn");
 
 		// Getting sequence
 		String sequence1 = inputGenomeSequence(genome1);
@@ -86,25 +84,25 @@ public class DBMain {
 //		String sequence4 = inputGenomeSequence(genome4);  // q axis
 //		String sequence5 = inputGenomeSequence(genome5);  // r axis
 		// Gets KmerComposition Arrays of each Axis
-		double[] xAxis = processSequencebyKmer(sequence1, kmerToDo);
-		double[] yAxis = processSequencebyKmer(sequence2, kmerToDo);
-		double[] zAxis = processSequencebyKmer(sequence3, kmerToDo);
+//		double[] xAxis = processSequencebyKmer(sequence1, kmerToDo);
+//		double[] yAxis = processSequencebyKmer(sequence2, kmerToDo);
+//		double[] zAxis = processSequencebyKmer(sequence3, kmerToDo);
 //		double[] qAxis = processSequencebyKmer(sequence4, kmerToDo);
 //		double[] rAxis = processSequencebyKmer(sequence5, kmerToDo);
 
 		// ensure the kmer composition processing worked
-		for (int i = 0; i < xAxis.length; i++) {
-			System.out.print(yAxis[i] + ", ");
-		}
-		System.out.println();
-		for (int i = 0; i < xAxis.length; i++) {
-			System.out.print(xAxis[i] + ", ");
-		}
-		System.out.println();
-		for (int i = 0; i < zAxis.length; i++) {
-			System.out.print(zAxis[i] + ", ");
-		}
-		System.out.println();
+//		for (int i = 0; i < xAxis.length; i++) {
+//			System.out.print(yAxis[i] + ", ");
+//		}
+//		System.out.println();
+//		for (int i = 0; i < xAxis.length; i++) {
+//			System.out.print(xAxis[i] + ", ");
+//		}
+//		System.out.println();
+//		for (int i = 0; i < zAxis.length; i++) {
+//			System.out.print(zAxis[i] + ", ");
+//		}
+//		System.out.println();
 //		for (int i = 0; i < qAxis.length; i++) {
 //			System.out.print(qAxis[i] + ", ");
 //		}
@@ -116,13 +114,14 @@ public class DBMain {
 		
 		// Inputs and Stores all genes in storage vector
 		System.out.println("Inputting Figgies");
-		double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
-		double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
+//		double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
+//		double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
 		
 		System.out.println("Making DB Connection");
 		
 
-		HashMap<Integer, Integer> pegSet = new HashMap<Integer, Integer>();
+		
+		HashMap<String, Integer> pegSet = new HashMap<String, Integer>();
 		int inSet = 0;
 		int outSet = 0;
 		int intersectionCount = 0;
@@ -130,79 +129,165 @@ public class DBMain {
 		System.out.println("Correlating");
 		
 		//  reading equations
-//		System.out.println("Reading Equations");
-//		BufferedReader bufferedReader = new BufferedReader(new FileReader("Equations.txt"));
+		System.out.println("Reading Equations");
+		BufferedReader bufferedReader = new BufferedReader(new FileReader("kmer4PCA"));
 		String line = "";
 		int count = 0;
-//		List<double[]> equationList = new ArrayList<double[]>();
-//		while ((line = bufferedReader.readLine()) != null) {
-//			equationList.add(parsePCAText(line));
-//		}
-//		bufferedReader.close();
-//		
+		List<double[]> equationList = new ArrayList<double[]>();
+		while ((line = bufferedReader.readLine()) != null) {
+			equationList.add(parsePCAText(line));
+		}
+		bufferedReader.close();
 		
+		//  finish creating table with size based on eqn list
+		for(int i = 0; i < equationList.size(); i ++){
+			sql += "z" + i + " double,";
+//				sql +=",";
+		}
+		sql += " PRIMARY KEY (uid))";
+		stmt.executeUpdate(sql);
+		
+		
+		//  batch insert statement
+		String prepsql = "";
+		//  create insert statement of size equationList.size for all dimensions
+		prepsql = "insert ignore into PCA4merTesting values (?,?,?,";
+		for(int i = 0; i < equationList.size(); i ++){
+			prepsql += "?";
+			if(i + 1 != equationList.size()){
+				prepsql +=",";
+			}
+		}
+		prepsql+=")";
+		PreparedStatement ps = con2.prepareStatement(prepsql);
+		
+		
+		//  begin reading genes
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String id = "";
 		String sequence = "";
-		while( (line = br.readLine()) != null){
+		System.out.println("inserting into db");
+		
 
 /**   INSERTING INTO TREE OR STORAGE VECTOR    **/
+		while( (line = br.readLine()) != null){
 			id = line;
 			sequence = br.readLine();
 			sequence = replaceNucs(sequence);
 			// System.out.println(sequence);
-			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
-			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
+			double[] gene = processSequencebyKmer(sequence, kmerToDo);
+//			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
+//			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
 //			if(test.search(new double[]{a,b}) == null)
 //				test.insert(new double[]{
 //					a,b
 //				}, id);
-			sql = "insert ignore into figfam (id, peg, x, y) values ('"+id+"', '"+getPeg(id)+"', "+a+", "+b+")";
-			stmt.executeUpdate(sql);
+			if (!id.contains("hypothetical") || !id.contains("Hypothetical")) continue;
 			count++;
-			 if (count>TOTAL_VALS) {
+			
+			
+			if (count>TOTAL_VALS) {
 //			if (count > 1000) {
 				break;
 			}
-			
+			sql = "insert ignore into pca4mertesting (uid,id,sequence,";
+			for(int i = 0; i < equationList.size(); i ++){
+				sql+="z"+i;
+				if(i + 1 != equationList.size()){
+					sql +=",";
+				}
+			}
+			sql+=") values ("+count +",'"+id+"','"+sequence+"',";
+			for(int i = 0; i < equationList.size(); i ++){
+				sql+= getPCAX(gene, equationList.get(i));
+				if(i + 1 != equationList.size()){
+					sql +=",";
+				}
+			}
+			sql+=")";
+			stmt.executeUpdate(sql);
+			ps.setInt(1, count);
+			ps.setString(2, id);
+			ps.setString(3, sequence);
+			for(int i = 0; i < equationList.size(); i ++){
+				int spot = i + 4;
+				ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
+			}
+			ps.addBatch();
+		}
+		ps.executeBatch();
+		
+		
+		ResultSet uidFinder = stmt.executeQuery("select count(*) from PCA4merTesting");
+		int uid = 0;
+		while(uidFinder.next()){
+			uid = uidFinder.getInt(1);
+		}
+		
+		
+		
 			
 /**   TRAINING DATA START    **/
-			
-			
-			Double[] coordArr = new Double[2];
-			coordArr[0] = a;
-			coordArr[1] = b;
-			
-			// adding them to plane by storing them as a number
-			// adding them to plane
+		while( (line=br.readLine()) != null){
+			double[] gene = processSequencebyKmer(sequence, kmerToDo);
+			//  find the coordinates of each point using the equations
+			Double[] coordArr = new Double[equationList.size()];
+				
+			for(int v = 0; v < equationList.size(); v ++){
+				coordArr[v] = getPCAX(gene, equationList.get(v));
+			}
 			Double[] coord1 = coordArr;
 			double[] coord = new double[coord1.length];
 			for(int c = 0; c < coord1.length; c ++){
 				coord[c] = coord1[c];
 			}
-			if(!pegSet.containsKey(Integer.valueOf(getPeg(id)))){
-				pegSet.put(Integer.valueOf(getPeg(id)), 1);
+			
+			
+			if(!pegSet.containsKey(id)){
+				pegSet.put(id, 1);
 			}
 			else{
-				int whatever = pegSet.get(Integer.valueOf(getPeg(id)));
-				pegSet.put(Integer.valueOf(getPeg(id)), whatever + 1);
+				int whatever = pegSet.get(id);
+				pegSet.put(id, whatever + 1);
 			}
 			
 			
 			// if the coordinate isn't in the KDTree, insert into tree
-			sql = "select id from figfam where x="+a+" and y="+b;
+			sql = "select id from pca4mertesting where ";
+			for(int i=0;i<equationList.size(); i ++){
+				sql+="z"+i+"="+coord[i];
+				if(i + 1 != equationList.size()){
+					sql +=" and ";
+				}
+			}
 			ResultSet rs = stmt.executeQuery(sql);
 			while(rs.next()){
 				String queriedID = rs.getString("id");
 				//if (test.search(coord) == null)
 				if(queriedID.equals("")){
-					sql = "insert ignore into figfam (id, peg, x, y) values ('"+id+"', '"+getPeg(id)+"', "+a+", "+b+")";
+					
+					//  insert into the db
+					sql = "insert ignore into pca4mertesting (uid,id,sequence,";
+					for(int i = 0; i < equationList.size(); i ++){
+						sql+="z"+i;
+						if(i + 1 != equationList.size()){
+							sql +=",";
+						}
+					}
+					sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
+					for(int i = 0; i < equationList.size(); i ++){
+						sql+= getPCAX(gene, equationList.get(i));
+						if(i + 1 != equationList.size()){
+							sql +=",";
+						}
+					}
+					sql+=")";
 					stmt.executeUpdate(sql);
 					
 					int clusterkey = Integer.valueOf(getPeg(id));
 //					String clusterkey = storage.get(i).Cog;
 					if (clusterMap.containsKey(clusterkey)) {
-						clusterMap.get(clusterkey).add(new Double[] { a, b });
+						clusterMap.get(clusterkey).add(coordArr);
 					}
 					// if no cog value in the map
 					else {
@@ -316,7 +401,7 @@ public class DBMain {
 //		KScopeGraph graph = new KScopeGraph(TOTAL_VALS, storage);
 //		KScopeGraph graph = new KScopeGraph(1000, storage);
 //		Example.showWithSwing( graph );
-		ResultSet size = stmt.executeQuery("select count(*) from figfam");
+		ResultSet size = stmt.executeQuery("select count(*) from pca4mertesting");
 		while(size.next()){
 			System.out.println("total rows " + size.getInt(1));
 		}
@@ -413,8 +498,8 @@ public class DBMain {
 		/* DONE TRAINING MODEL */
 
 		// testing the file of the subset of figs
-		File testFile = new File("testFig100.txt");
-		Vector<Gene> testSequences = InputAndProcessGenesLine(testFile, parsedPCAX, parsedPCAY);
+		File testFile = new File("TestOut.ffn");
+		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
 		int miss = 0;
 		int hit = 0;
@@ -422,18 +507,18 @@ public class DBMain {
 		int searchPositive = 0;
 		int searchNegative = 0;
 
-		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
+//		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
 //		PrintWriter pws = new PrintWriter(new File("Threshold_Small.csv"));
 //		PrintWriter pwm = new PrintWriter(new File("Threshold_Medium.csv"));
-		PrintWriter sameCogWriterSmall = new PrintWriter(new File("Same_Cogs_Small.csv"));
-		PrintWriter sameCogWriterMed = new PrintWriter(new File("Same_Cogs_Medium.csv"));
-		PrintWriter nearWriter = new PrintWriter(new File("Nearest_Classification.csv"));
-		sameCogWriterSmall.write("peg #, # of same cogs");
-		sameCogWriterSmall.write('\n');
-		sameCogWriterMed.write("peg #, # of same cogs");
-		sameCogWriterMed.write('\n');
-		nearWriter.write("peg #, coords away");
-		nearWriter.write('\n');
+//		PrintWriter sameCogWriterSmall = new PrintWriter(new File("Same_Cogs_Small.csv"));
+//		PrintWriter sameCogWriterMed = new PrintWriter(new File("Same_Cogs_Medium.csv"));
+//		PrintWriter nearWriter = new PrintWriter(new File("Nearest_Classification.csv"));
+//		sameCogWriterSmall.write("peg #, # of same cogs");
+//		sameCogWriterSmall.write('\n');
+//		sameCogWriterMed.write("peg #, # of same cogs");
+//		sameCogWriterMed.write('\n');
+//		nearWriter.write("peg #, coords away");
+//		nearWriter.write('\n');
 		StringBuilder sb = new StringBuilder();
 		sb.append("peg #");
 		sb.append(',');
@@ -445,7 +530,7 @@ public class DBMain {
 //		sb.append(',');
 //		sb.append("# of points with same CSV");
 		sb.append('\n');
-		pw.write(sb.toString());
+//		pw.write(sb.toString());
 //		pws.write(sb.toString());
 //		pwm.write("peg #, Other 0.0 - 0.01,");
 //		pwm.write('\n');
@@ -454,23 +539,23 @@ public class DBMain {
 
 		// takes kmer vector and creates the kmer count
 		for (int i = 2; i < testSequences.size(); i++) {
-//			double[] gene = testSequences.get(i).kmerVector.clone();
+			double[] gene = testSequences.get(i).kmerVector.clone();
 //			double[] gene2 = testSequences.get(i).kmerVector.clone();
 //			double[] gene3 = testSequences.get(i).kmerVector.clone();
 //			double[] gene4 = testSequences.get(i).kmerVector.clone();
 //			double[] gene5 = testSequences.get(i).kmerVector.clone();
-			double[] x = xAxis.clone();
-			double[] y = yAxis.clone();
+//			double[] x = xAxis.clone();
+//			double[] y = yAxis.clone();
 //			double[] z = zAxis.clone();
 //			double[] q = qAxis.clone();
 //			double[] r = rAxis.clone();
 			// adding them to plane
-			Double[] coordArr = new Double[2];
-			//for(int v = 0; v < equationList.size(); v ++){
-			//	coordArr[v] = getPCAX(gene, equationList.get(v));
-			//}
-			coordArr[0] = testSequences.get(i).x;
-			coordArr[1] = testSequences.get(i).y;
+			Double[] coordArr = new Double[equationList.size()];
+			for(int v = 0; v < equationList.size(); v ++){
+				coordArr[v] = getPCAX(gene, equationList.get(v));
+			}
+//			coordArr[0] = testSequences.get(i).x;
+//			coordArr[1] = testSequences.get(i).y;
 			
 //			double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
 //			double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
@@ -486,7 +571,13 @@ public class DBMain {
 			}
 
 			// if it is not in the grid, look at the nearest one.
-			sql = "select id, peg from figfam where x="+coordArr[0]+" and y="+coordArr[1];
+			sql = "select id from PCA4merTesting where x="+coordArr[0]+" and y="+coordArr[1];
+			for(int i2=0; i2 < coordArr.length; i2 ++){
+				sql+="z"+i2+"="+coordArr[i2];
+				if(i2+1 != coordArr.length){
+					sql += " and ";
+				}
+			}
 			ResultSet rs = stmt.executeQuery(sql);
 			while(rs.next()){
 				String queriedID = rs.getString("id");
@@ -496,7 +587,7 @@ public class DBMain {
 				// otherwise we are wrong
 					
 					
-					if (nearest(coord, stmt).equals(getPeg(testSequences.get(i).Cog))) {
+					if (nearest(coord, stmt).equals(testSequences.get(i).Cog)) {
 						searchPositive++;
 					} else {
 /**1  nearest correct classification  start    **/
@@ -520,7 +611,7 @@ public class DBMain {
 					filenum ++;
 /**3		nearest point sequence simularity    **/
 					
-					if(pegSet.containsKey(Integer.valueOf(getPeg(testSequences.get(i).Cog)))){
+					if(pegSet.containsKey(testSequences.get(i).Cog)){
 //						System.out.println(pegSet.get(Integer.valueOf(getPeg(testSequences.get(i).Cog))));
 						inSet ++;
 					}
@@ -531,7 +622,7 @@ public class DBMain {
 				
 			// if we search and land on top of another coordinate
 				//else if (getPeg(test.nearest(coord).toString()).equals(getPeg(testSequences.get(i).Cog))) {
-				else if(getPeg(queriedID).equals(getPeg(testSequences.get(i).Cog))){
+				else if(queriedID.equals(testSequences.get(i).Cog)){
 /**2     THRESHOLD p1 START   **/
 //				List<String> rangeVals = new ArrayList<String>();
 //				List<String> medVals = new ArrayList<String>();
@@ -595,7 +686,7 @@ public class DBMain {
 				hit++;
 			} 
 				//else if (test.search(coord).equals(getPeg(testSequences.get(i).Cog)) == false) {
-				else if(getPeg(queriedID).equals(getPeg(testSequences.get(i).Cog)) == false) {
+				else if(queriedID.equals(testSequences.get(i).Cog) == false) {
 				
 				
 /***2     THRESHOLD p2 START       **/
@@ -677,12 +768,12 @@ public class DBMain {
 		}
 		}
 		// pw.write(sb.toString());
-		pw.close();
+//		pw.close();
 //		pws.close();
 //		pwm.close();
-		sameCogWriterSmall.close();
-		sameCogWriterMed.close();
-		nearWriter.close();
+//		sameCogWriterSmall.close();
+//		sameCogWriterMed.close();
+//		nearWriter.close();
 		System.out.println("Hits: " + hit);
 		System.out.println("Misclassified" + miss);
 		System.out.println("Nothing there" + nothingThere);
@@ -787,36 +878,84 @@ public class DBMain {
 	private static String nearest(double[] coord, Statement stmt) throws SQLException {
 		String sql = "";
 		String rt = "";
+		double[] coordSet1 = new double[coord.length];
+		double[] coordSet2 = new double[coord.length];
 		double x1 = 0.0;
 		double y1 = 0.0;
 		double x2 = 0.0;
 		double y2 = 0.0;
 		double distance1 = 0.0;
 		double distance2 = 0.0;
-		sql = "select x,y from figfam where x<=" + coord[0] +" or y<=" + coord[1] + " order by x desc, y desc";
+		
+		
+		//  select all points smaller than the target coords
+		sql = "select ";
+		for(int i =0; i < coord.length; i ++){
+			sql+="z"+i;
+			if(i+1 != coord.length){
+				sql+=",";
+			}
+		}
+		sql+=" from PCA4merTesting where ";
+		for(int i = 0; i < coord.length; i ++){
+			sql+="z"+i+"<="+coord[i];
+			if(i+1 != coord.length){
+				sql+="or";
+			}
+		}
+		
+		sql+= " order by x desc, y desc";
 		
 		ResultSet rs = stmt.executeQuery(sql);
 		while(rs.next()){
-			System.out.println("found " + rs.getDouble(1) +" "+ rs.getDouble(2));
-			x1=rs.getDouble(1);
-			y1 = rs.getDouble(2);
+			for(int i = 0; i < rs.getMetaData().getColumnCount(); i ++){
+				coordSet1[i]=rs.getDouble(i+1);
+			}
 			break;
 		}
-		sql = "select x,y from figfam where x>=" + coord[0] +" or y>=" + coord[1] +" order by x asc, y asc";
-		
+	//  select all points smaller than the target coords
+			sql = "select ";
+			for(int i =0; i < coord.length; i ++){
+				sql+="z"+i;
+				if(i+1 != coord.length){
+					sql+=",";
+				}
+			}
+			sql+=" from PCA4merTesting where ";
+			for(int i = 0; i < coord.length; i ++){
+				sql+="z"+i+">="+coord[i];
+				if(i+1 != coord.length){
+					sql+="or";
+				}
+			}
+			
+			sql+= " order by x asc, y asc";		
 		rs = stmt.executeQuery(sql);
 		while(rs.next()){
-			x2=rs.getDouble(1);
-			y2 = rs.getDouble(2);
+			for(int i = 0; i < rs.getMetaData().getColumnCount(); i ++){
+				coordSet2[i]=rs.getDouble(i+1);
+			}
 			break;
 		}
 		
-		distance1 = Math.sqrt((-130-x2)*(-130-x2) + (52-y2)*(52-y2));
-		distance2 = Math.sqrt((x1+130)*(x1+130) + (y1-52)*(y1-52));
-		coord[0] = (distance1 > distance2) ? x2 : x1;
-		coord[1] = (distance1 > distance2) ? y2 : y1;
+		//  calc distance using sqrt(coord1*coord1 + coord2*coord2+...)
+		for(int i =0; i < coordSet1.length; i ++){
+			distance1 += coordSet1[i] * coordSet1[i];
+		}
+		for(int i =0; i < coordSet1.length; i ++){
+			distance2 += coordSet2[i] * coordSet2[i];
+		}
+		distance1 = Math.sqrt(distance1);
+		distance2 = Math.sqrt(distance2);
+		coord = (distance1 > distance2) ? coordSet1 : coordSet2;
 		
-		sql = "select peg from figfam where x=" + coord[0] +" and y=" + coord[1];
+		sql = "select id from PCA4merTesting where x=" + coord[0] +" and y=" + coord[1];
+		for(int i=0; i < coord.length; i ++){
+			sql+="z"+i+"="+coord[i];
+			if(i+1!=coord.length){
+				sql+="and";
+			}
+		}
 		rs = stmt.executeQuery(sql);
 		while(rs.next()){
 			rt = rs.getString(1);
@@ -829,9 +968,20 @@ public class DBMain {
 		String[] arr = text.split("[kmer]");
 		double[] returnarr = new double[arr.length];
 		for(int i = 0; i < arr.length; i += 4){
-			if(arr[i].contains("-")){
+			if(i==0){
+				String zeroSpot = arr[0].replaceAll(" ", "");
+				String first = "";
+				if(zeroSpot.contains("-")){
+					first = "-"+zeroSpot.split("-")[1];
+				}
+				else{
+					first = zeroSpot.substring(zeroSpot.length()-5, zeroSpot.length());
+				}
+				returnarr[Integer.valueOf(arr[i+4].split("[+-]")[0]) - 1] = Double.valueOf(first);
+				continue;
+			}
+			else if(arr[i].contains("-")){
 				String[] arr2 = arr[i].split("[-]");
-//					System.out.println(Integer.valueOf(arr[i+4].split("[+-]")[0]));
 					int posval = Integer.valueOf(arr[i+4].split("[+-]")[0]);
 					returnarr[posval - 1] = Double.valueOf(arr2[1]) * -1.0;
 				
@@ -1138,6 +1288,48 @@ public class DBMain {
 	}
 
 	//
+	/**
+	 * 	The current way to take in and process genes from a file
+	 * @param f
+	 * @return
+	 * @throws IOException
+	 */
+	public static Vector<Gene> InputAndProcessGenesCategoryTest(File f) throws IOException{
+		boolean first = true;
+		String sequence = "";
+		Vector<Gene> storage = new Vector<Gene>();
+		String id = "";
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+		String line = "";
+		int count = 0;
+		while ((line = bufferedReader.readLine()) != null) {
+			if(line.contains("USS-DB")){
+				sequence = bufferedReader.readLine();
+				id = "";
+				sequence = "";
+				continue;
+			}
+			id = line;
+			sequence = bufferedReader.readLine();
+			sequence = replaceNucs(sequence);
+			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
+				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
+				count++;
+			}
+			
+			
+			 if (count>100000) {
+//			if (count > 1000) {
+				break;
+			}
+			id = "";
+			sequence = "";
+		}
+		bufferedReader.close();
+		return storage;
+	}
+	
+	
 	/**
 	 * looks through the file and takes in the gene sequences and
 	 * classifications
