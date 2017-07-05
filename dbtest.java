@@ -1,8 +1,11 @@
 package KScope;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -13,6 +16,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class dbtest {
 
@@ -24,10 +30,16 @@ public class dbtest {
 	public static int numShiftsMinus = 0;
 	public static int kmerToDo = 0;
 	
+	public static int searchPositive = 0;
+	public static int searchNegative = 0;
+	public static int hit = 0;
+	public static int miss = 0;
+	
 	static String host = "localhost";
 	static String username = "root";
 	static String pswd = "password";
 	static String port = "3306";
+	static String table = "PCA3merTesting";
 
 	public static void main(String[] args) throws ClassNotFoundException, IOException {
 		kmerToDo =4;
@@ -47,16 +59,16 @@ public class dbtest {
 			Connection con2 = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/figfams", username, pswd);
 			stmt = con2.createStatement();
 			
-			String sql = "CREATE TABLE IF NOT EXISTS PCA4merTesting " +
+			String sql = "CREATE TABLE IF NOT EXISTS " + table +" "+
 	                "(uid int not NULL, " +
-					" id varchar(255) not NULL, "+
-	                " sequence varchar(255) not NULL,";
+					" id TEXT not NULL, "+
+	                " sequence TEXT not NULL,";
 //	                " PRIMARY KEY ( id ))"; 
 //			stmt.executeUpdate(sql);
 			
 			
 			//  read from equation file
-			BufferedReader eqnReader = new BufferedReader(new FileReader("kmer4PCA"));
+			BufferedReader eqnReader = new BufferedReader(new FileReader("percentage3merPCA2.txt"));
 			List<double[]> equationList = new ArrayList<double[]>();
 			String eqn = "";
 			while((eqn=eqnReader.readLine()) != null){
@@ -80,50 +92,223 @@ public class dbtest {
 			}
 			prepsql+=")";
 			PreparedStatement ps = con2.prepareStatement(prepsql);
-			BufferedReader br = new BufferedReader(new FileReader("TrainOut.ffn"));
+			BufferedReader br = new BufferedReader(new FileReader("TrainOut3.ffn"));
 			int count = 0;
 			int uid = 0;
 			String id="";
 			String line = "";
 			String sequence = "";
-			while((line = br.readLine()) != null){
-				id = line;
-				sequence = br.readLine();
-				sequence = replaceNucs(sequence);
-				sql = "insert ignore into pca4mertesting (uid,id,sequence,";
-				for(int i = 0; i < equationList.size(); i ++){
-					sql+="z"+i;
-					if(i + 1 != equationList.size()){
-						sql +=",";
+			/**   TRAINING BEGIN   **/
+//			while((line = br.readLine()) != null){
+//				id = line;
+//				sequence = br.readLine();
+//				sequence = replaceNucs(sequence);
+//				if(count < 3037271){
+////					System.out.println(count);3037273
+//					count++;
+//					continue;
+//				}
+//				sql = "insert ignore into "+table+" (uid,id,sequence,";
+//				for(int i = 0; i < equationList.size(); i ++){
+//					sql+="z"+i;
+//					if(i + 1 != equationList.size()){
+//						sql +=",";
+//					}
+//				}
+//				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
+//				// calculate gene
+//				double[] gene = processSequencebyKmer(sequence, kmerToDo);
+//				double sumGene = 0.0;
+//				for(int i2 = 0; i2 < gene.length; i2++){
+//					sumGene+=gene[i2];
+//				}
+//				for(int i2 = 0; i2 < gene.length; i2++){
+//					gene[i2] = gene[i2]/sumGene;
+//				}
+//				//  calculate the coordinates
+//				for(int i = 0; i < equationList.size(); i ++){
+//					sql+= getPCAX(gene, equationList.get(i));
+//					if(i + 1 != equationList.size()){
+//						sql +=",";
+//					}
+//				}
+//				sql+=")";
+//				stmt.executeUpdate(sql);
+//				
+//				
+//				ps.setInt(1, uid);
+//				uid++;
+//				ps.setString(2, id);
+//				ps.setString(3, sequence);
+//				for(int i = 0; i < equationList.size(); i ++){
+//					int spot = i + 4;
+//					ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
+//				}
+////				ps.addBatch();
+//				count ++;
+//				
+//			}
+//			ps.executeBatch();
+			/**    TRAINING END     **/
+			ResultSet size = stmt.executeQuery("select count(*) from pca3mertesting");
+			while(size.next()){
+				System.out.println("total rows " + size.getInt(1));
+			}
+			/**    BEGIN TESTING    **/
+			File testFile = new File("TestOut3.ffn");
+			Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
+			System.out.println("We have " + testSequences.size() + " test sequences!");
+			BufferedWriter bw = new BufferedWriter(new FileWriter("nearest100.csv"));
+			bw.write("IDs at target coord, Nearest IDs with sequence");
+			ExecutorService executor = Executors.newFixedThreadPool(10);
+			for(int runs = 0; runs < 1000; runs ++){
+				final int runs3 = runs;
+				Runnable r = new Runnable(){
+					public void run(){
+						for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
+							if(sequences == 0) sequences=2;
+							
+							//  calculate the correct gene array
+							double[] gene = testSequences.get(sequences).kmerVector.clone();
+							double sumGene = 0.0;
+							for(int i2 = 0; i2 < gene.length; i2++){
+								sumGene+=gene[i2];
+							}
+							for(int i2 = 0; i2 < gene.length; i2++){
+								gene[i2] = gene[i2]/sumGene;
+							}
+							
+							
+							//  calculate the coordinates
+							Double[] coordArr = new Double[equationList.size()];
+							for(int v = 0; v < equationList.size(); v ++){
+								coordArr[v] = getPCAX(gene, equationList.get(v));
+							}
+							
+							
+							Double[] coord1 = coordArr;
+							double[] coord = new double[coord1.length];
+							for(int c = 0; c < coord1.length; c ++){
+								coord[c] = coord1[c];
+							}
+							
+							//  random weird error happens without this
+							if(coordArr[0].isNaN() || coordArr[1].isNaN()) continue;
+						
+							try{
+								String sql = "select id from "+table+" where ";
+								for(int i=0; i < coordArr.length; i ++){
+									
+									sql+="z"+i+"="+coordArr[i];
+									if(i+1!=equationList.size()){
+										sql+=" and ";
+									}
+								}
+								ResultSet rs = stmt.executeQuery(sql);
+								while(rs.next()){
+									String queriedID = rs.getString("id");
+									if(queriedID.equals("") || queriedID.equals(null) || queriedID==null){
+										if(nearest(coord,stmt).equals(testSequences.get(sequences).Cog)){
+											searchPositive ++;
+										}
+										else {
+											searchNegative ++;
+										}
+									}
+									else if(queriedID.equals(testSequences.get(sequences).Cog)){
+										hit ++;
+									}
+									else if(queriedID.equals(testSequences.get(sequences).Cog) == false){
+										miss ++;
+									}
+								}
+								
+//								printNearest100(coord, stmt, bw);
+								rs.close();
+							}catch(Exception e){
+								e.printStackTrace();
+							}
+						}
 					}
-				}
-				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
-				double[] gene = processSequencebyKmer(sequence, kmerToDo);
-				for(int i = 0; i < equationList.size(); i ++){
-					sql+= getPCAX(gene, equationList.get(i));
-					if(i + 1 != equationList.size()){
-						sql +=",";
+					
+					public void printNearest100(double[] coord, Statement stmt, BufferedWriter bw) throws IOException, SQLException{
+						String sql = "";
+						String rt = "";
+						
+						
+						
+						//  select all points at the target coords
+						sql = "select id from "+table+" where ";
+						for(int i=0; i < coord.length; i ++){
+							sql+="z"+i+"="+coord[i];
+							if(i+1!=coord.length){
+								sql+="and";
+							}
+						}
+						ResultSet rs = stmt.executeQuery(sql);
+						while(rs.next()){
+							rt = rs.getString(1);
+							bw.write(rt+"``````");
+						}
+						bw.write(",");
+						
+						//  select all points smaller than the target coords
+						sql = "select id, sequence ";
+						
+						sql+=" from "+table+" where ";
+						for(int i = 0; i < coord.length; i ++){
+							sql+="z"+i+"<="+coord[i];
+							if(i+1 != coord.length){
+								sql+="or";
+							}
+						}
+						
+						sql+= " order by x desc, y desc limit 0,50";
+						
+						
+						while(rs.next()){
+							bw.write(rs.getString("id") + " " + rs.getString("sequence")+",");
+						}
+					//  select all points smaller than the target coords
+							sql = "select id,sequence ";
+							
+							sql+=" from "+table+" where ";
+							for(int i = 0; i < coord.length; i ++){
+								sql+="z"+i+">="+coord[i];
+								if(i+1 != coord.length){
+									sql+="or";
+								}
+							}
+							
+							sql+= " order by x asc, y asc limit 0,50";		
+						rs = stmt.executeQuery(sql);
+						while(rs.next()){
+							bw.write(rs.getString("id") + " " + rs.getString("sequence")+",");
+						}
+						
+						
+						
+						
+						return;
+						
 					}
-				}
-				sql+=")";
-				stmt.executeUpdate(sql);
-				
-				if(count > 3000000) break;
-				ps.setInt(1, uid);
-				uid++;
-				ps.setString(2, id);
-				ps.setString(3, sequence);
-				for(int i = 0; i < equationList.size(); i ++){
-					int spot = i + 4;
-					ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
-				}
-				ps.addBatch();
-				count ++;
+				};
+				executor.execute(r);
+			}
+			// shutdown the threads
+			executor.shutdown();
+			
+			while(!executor.isTerminated()){
 				
 			}
-			ps.executeBatch();
-			
-			
+			bw.close();
+			/**   END TESTING   **/
+			System.out.println("Hits: " + hit);
+			System.out.println("Misclassified" + miss);
+			System.out.println("Search Positive: " + searchPositive);
+			System.out.println("Search Negative: " + searchNegative);
+			con2.close();
+			stmt.close();
 			
 //			String id = ">fig|657324.3.peg.930";
 //			double a = -127.18;
@@ -220,6 +405,155 @@ public class dbtest {
 		}
 		
 		
+	}
+	
+	/**
+	 * 	The current way to take in and process genes from a file
+	 * @param f
+	 * @return
+	 * @throws IOException
+	 */
+	public static Vector<Gene> InputAndProcessGenesCategoryTest(File f) throws IOException{
+		boolean first = true;
+		String sequence = "";
+		Vector<Gene> storage = new Vector<Gene>();
+		String id = "";
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+		String line = "";
+		int count = 0;
+		while ((line = bufferedReader.readLine()) != null) {
+			if(line.contains("USS-DB")){
+				sequence = bufferedReader.readLine();
+				id = "";
+				sequence = "";
+				continue;
+			}
+			id = line;
+			sequence = bufferedReader.readLine();
+			sequence = replaceNucs(sequence);
+			sequence = sequence.substring(60, sequence.length() - 2);
+			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
+				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
+				count++;
+			}
+			
+			
+			 if (count>100000) {
+//			if (count > 1000) {
+				break;
+			}
+			id = "";
+			sequence = "";
+		}
+		bufferedReader.close();
+		return storage;
+	}
+	
+	/**
+	 * Will find the nearest point to coord in the database
+	 * @param coord - the coords that we will be trying to find something close to
+	 * @param stmt - the statement from the database that will let us query the db
+	 * @return - the closest point to coord
+	 * @throws SQLException - if anything goes wrong, throw it!
+	 */
+	private static String nearest(double[] coord, Statement stmt) throws SQLException {
+		String sql = "";
+		String rt = "";
+		double[] coordSet1 = new double[coord.length];
+		double[] coordSet2 = new double[coord.length];
+		double x1 = 0.0;
+		double y1 = 0.0;
+		double x2 = 0.0;
+		double y2 = 0.0;
+		double distance1 = 0.0;
+		double distance2 = 0.0;
+		
+		
+		//  select all points smaller than the target coords
+		sql = "select ";
+		for(int i =0; i < coord.length; i ++){
+			sql+="z"+i;
+			if(i+1 != coord.length){
+				sql+=",";
+			}
+		}
+		sql+=" from "+table+" where ";
+		for(int i = 0; i < coord.length; i ++){
+			sql+="z"+i+"<="+coord[i];
+			if(i+1 != coord.length){
+				sql+="or";
+			}
+		}
+		
+		sql+= " order by ";
+		for(int i =0; i < coord.length; i ++){
+			sql+="z"+i +" desc";
+			if(i+1 != coord.length){
+				sql+=",";
+			}
+		}
+		
+		ResultSet rs = stmt.executeQuery(sql);
+		while(rs.next()){
+			for(int i = 0; i < rs.getMetaData().getColumnCount(); i ++){
+				coordSet1[i]=rs.getDouble(i+1);
+			}
+			break;
+		}
+	//  select all points smaller than the target coords
+			sql = "select ";
+			for(int i =0; i < coord.length; i ++){
+				sql+="z"+i;
+				if(i+1 != coord.length){
+					sql+=",";
+				}
+			}
+			sql+=" from "+table+" where ";
+			for(int i = 0; i < coord.length; i ++){
+				sql+="z"+i+">="+coord[i];
+				if(i+1 != coord.length){
+					sql+="or";
+				}
+			}
+			
+			sql+= " order by ";
+			for(int i =0; i < coord.length; i ++){
+				sql+="z"+i +" asc";
+				if(i+1 != coord.length){
+					sql+=",";
+				}
+			}
+		rs = stmt.executeQuery(sql);
+		while(rs.next()){
+			for(int i = 0; i < rs.getMetaData().getColumnCount(); i ++){
+				coordSet2[i]=rs.getDouble(i+1);
+			}
+			break;
+		}
+		
+		//  calc distance using sqrt(coord1*coord1 + coord2*coord2+...)
+		for(int i =0; i < coordSet1.length; i ++){
+			distance1 += coordSet1[i] * coordSet1[i];
+		}
+		for(int i =0; i < coordSet1.length; i ++){
+			distance2 += coordSet2[i] * coordSet2[i];
+		}
+		distance1 = Math.sqrt(distance1);
+		distance2 = Math.sqrt(distance2);
+		coord = (distance1 > distance2) ? coordSet1 : coordSet2;
+		
+		sql = "select id from "+table+" where x=" + coord[0] +" and y=" + coord[1];
+		for(int i=0; i < coord.length; i ++){
+			sql+="z"+i+"="+coord[i];
+			if(i+1!=coord.length){
+				sql+="and";
+			}
+		}
+		rs = stmt.executeQuery(sql);
+		while(rs.next()){
+			rt = rs.getString(1);
+		}
+		return rt;
 	}
 	
 	private static double getPCAX(double[] kmer, double[] pcaArr) {

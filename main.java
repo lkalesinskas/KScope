@@ -98,7 +98,7 @@ public class main {
 		
 		System.out.println("Making KD Tree");
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("PCA3mer.txt"));
+		BufferedReader bufferedReader = new BufferedReader(new FileReader("percentage3merPCA.txt"));
 		String line = "";
 		List<double[]> equationList = new ArrayList<double[]>();
 		while ((line = bufferedReader.readLine()) != null) {
@@ -127,6 +127,13 @@ public class main {
 
 			// storing the kmer composition of the gene
 			double[] gene = storage.get(i).kmerVector.clone();
+			double sumGene = 0.0;
+			for(int i2 = 0; i2 < gene.length; i2++){
+				sumGene+=gene[i2];
+			}
+			for(int i2 = 0; i2 < gene.length; i2++){
+				gene[i2] = gene[i2]/sumGene;
+			}
 //			double[] gene2 = storage.get(i).kmerVector.clone();
 //			double[] gene3 = storage.get(i).kmerVector.clone();
 //			double[] gene4 = storage.get(i).kmerVector.clone();
@@ -384,7 +391,14 @@ public class main {
 		// takes kmer vector and creates the kmer count
 		for (int i = 2; i < testSequences.size(); i++) {
 			double[] gene = testSequences.get(i).kmerVector.clone();
-			double[] gene2 = testSequences.get(i).kmerVector.clone();
+			double sumGene = 0.0;
+			for(int i2 = 0; i2 < gene.length; i2++){
+				sumGene+=gene[i2];
+			}
+			for(int i2 = 0; i2 < gene.length; i2++){
+				gene[i2] = gene[i2]/sumGene;
+			}
+//			double[] gene2 = testSequences.get(i).kmerVector.clone();
 //			double[] gene3 = testSequences.get(i).kmerVector.clone();
 //			double[] gene4 = testSequences.get(i).kmerVector.clone();
 //			double[] gene5 = testSequences.get(i).kmerVector.clone();
@@ -1063,7 +1077,7 @@ public class main {
 			}
 			
 			
-			 if (count>1000000) {
+			 if (count>100000) {
 //			if (count > 1000) {
 				break;
 			}

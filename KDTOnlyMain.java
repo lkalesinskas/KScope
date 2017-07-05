@@ -47,7 +47,7 @@ public class KDTOnlyMain {
 	public static void main(String[] args) throws Exception {
 
 		// kmer size we are using
-		kmerToDo = 4;
+		kmerToDo = 3;
 
 		// Files for Axis
 		File genome1 = new File("Genomes\\Genome1.fna");
@@ -57,7 +57,7 @@ public class KDTOnlyMain {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("TrainOut.ffn");
+		File geneFile = new File("TrainOut3.ffn");
 
 		// Getting sequence
 //		String sequence1 = inputGenomeSequence(genome1);
@@ -104,7 +104,7 @@ public class KDTOnlyMain {
 		System.out.println("Making KD Tree");
 		//  reading equations
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("kmer4PCA"));
+		BufferedReader bufferedReader = new BufferedReader(new FileReader("percentage3merPCA2.txt"));
 		String line = "";
 		int count = 0;
 		List<double[]> equationList = new ArrayList<double[]>();
@@ -141,8 +141,16 @@ public class KDTOnlyMain {
 			id = line;
 			sequence = br.readLine();
 			sequence = replaceNucs(sequence);
+			sequence = sequence.substring(60, sequence.length() - 2);
 			// System.out.println(sequence);
 			double[] gene = processSequencebyKmer(sequence, kmerToDo);
+			double sumGene = 0.0;
+			for(int i2 = 0; i2 < gene.length; i2++){
+				sumGene+=gene[i2];
+			}
+			for(int i2 = 0; i2 < gene.length; i2++){
+				gene[i2] = gene[i2]/sumGene;
+			}
 //			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
 //			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
 			Double[] coordArr = new Double[equationList.size()];
@@ -193,6 +201,13 @@ public class KDTOnlyMain {
 			sequence = replaceNucs(sequence);
 			// System.out.println(sequence);
 			double[] gene = processSequencebyKmer(sequence, kmerToDo);
+			double sumGene = 0.0;
+			for(int i2 = 0; i2 < gene.length; i2++){
+				sumGene+=gene[i2];
+			}
+			for(int i2 = 0; i2 < gene.length; i2++){
+				gene[i2] = gene[i2]/sumGene;
+			}
 //			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
 //			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
 			Double[] coordArr = new Double[equationList.size()];
@@ -453,7 +468,7 @@ public class KDTOnlyMain {
 		/* DONE TRAINING MODEL */
 
 		// testing the file of the subset of figs
-		File testFile = new File("TestOut.ffn");
+		File testFile = new File("TestOut3.ffn");
 		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
 		
@@ -496,6 +511,13 @@ public class KDTOnlyMain {
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
 						//  get the kmervector
 						double[] gene = testSequences.get(sequences).kmerVector.clone();
+						double sumGene = 0.0;
+						for(int i2 = 0; i2 < gene.length; i2++){
+							sumGene+=gene[i2];
+						}
+						for(int i2 = 0; i2 < gene.length; i2++){
+							gene[i2] = gene[i2]/sumGene;
+						}
 						
 						//  begin calculating the coordinates for the test sequences
 						Double[] coordArr = new Double[equationList.size()];
@@ -1265,6 +1287,7 @@ public class KDTOnlyMain {
 			id = line;
 			sequence = bufferedReader.readLine();
 			sequence = replaceNucs(sequence);
+			sequence = sequence.substring(60, sequence.length() - 2);
 			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
 				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
 				count++;
@@ -1304,6 +1327,7 @@ public class KDTOnlyMain {
 			id = line;
 			sequence = bufferedReader.readLine();
 			sequence = replaceNucs(sequence);
+			sequence = sequence.substring(60, sequence.length() - 2);
 			// System.out.println(sequence);
 //			storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
 			storage.add(new Gene(id, getPCAX(processSequencebyKmer(sequence, kmerToDo), xEQN), getPCAY(processSequencebyKmer(sequence, kmerToDo), yEQN)));

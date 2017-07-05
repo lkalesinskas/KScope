@@ -949,7 +949,7 @@ public class DBMain {
 		distance2 = Math.sqrt(distance2);
 		coord = (distance1 > distance2) ? coordSet1 : coordSet2;
 		
-		sql = "select id from PCA4merTesting where x=" + coord[0] +" and y=" + coord[1];
+		sql = "select id from PCA4merTesting where ";
 		for(int i=0; i < coord.length; i ++){
 			sql+="z"+i+"="+coord[i];
 			if(i+1!=coord.length){
