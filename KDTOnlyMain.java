@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ import edu.wlu.cs.levy.CG.KeySizeException;
  *
  */
 public class KDTOnlyMain {
-	private static int TOTAL_VALS = 3000000;
+	private static int TOTAL_VALS = 9000000;
 	public static int nmer = 0;
 	public static int kmerMax = 9;
 	public static int numShifts = 0;
@@ -122,12 +123,23 @@ public class KDTOnlyMain {
 		
 		
 		//  intersection file
-		BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("intersections.csv"));
-		intersectWriter.write("ID, Values Intersecting With,\n");
-		HashMap<String, List<String>> intersectionMap = new HashMap<String, List<String>>();
+		BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("intersections_with_KDT.csv"));
+		intersectWriter.write("ID, Sequence,\n");
+//		HashMap<double[], List<String>> intersectionMap = new HashMap<double[], List<String>>();
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String id = "";
 		String sequence = "";
+		BufferedWriter coordWriter = new BufferedWriter(new FileWriter("In_KDT.csv"));
+		coordWriter.write("ID,Sequence,");
+		for(int i = 0; i < equationList.size(); i ++){
+			coordWriter.write("z"+i+",");
+		}
+		coordWriter.write("\n");
+		for(int i = 0; i < equationList.size(); i ++){
+			intersectWriter.write("z"+i+",");
+		}
+		intersectWriter.write("\n");
+		
 		while( (line = br.readLine()) != null){
 
 /**   INSERTING INTO TREE OR STORAGE VECTOR    **/
@@ -166,7 +178,7 @@ public class KDTOnlyMain {
 			for(int c = 0; c < coord1.length; c ++){
 				coord[c] = coord1[c];
 			}
-			if (!id.contains("hypothetical") || !id.contains("Hypothetical")) {
+			if (!id.contains("hypothetical") || !id.contains("Hypothetical") || !line.contains("USS-DB")) {
 				
 				for(int v = 0; v < equationList.size(); v ++){
 					coordArr[v] = getPCAX(gene, equationList.get(v));
@@ -174,7 +186,20 @@ public class KDTOnlyMain {
 				
 				
 				if(test.search(coord) == null){
+					coordWriter.write(id+","+sequence+",");
+					for(int i = 0; i < equationList.size(); i ++){
+						coordWriter.write(coord[i] +",");
+					}
+					coordWriter.write("\n");
 					test.insert(coord, id);
+				}
+				else if(test.search(coord) != null){
+					intersectWriter.write(id+","+sequence+",");
+					for(int i = 0; i < equationList.size(); i ++){
+						intersectWriter.write(coord[i] +",");
+					}
+					intersectWriter.write("\n");
+					intersectionCount ++;
 				}
 				count++;
 			}
@@ -183,100 +208,102 @@ public class KDTOnlyMain {
 				break;
 			}
 		}
+		coordWriter.close();
+		intersectWriter.close();
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
 		System.out.println("finished initial tree inserts");
 			System.gc();
 			System.out.println("beginning training data");
 /**   TRAINING DATA START    **/
 			
-		while((line=br.readLine()) != null){
-			id=line;
-			if(line.contains("USS-DB") || id.contains("hypothetical") || id.contains("Hypothetical")){
-				sequence = br.readLine();
-				id = "";
-				sequence = "";
-				continue;
-			}
-			sequence = br.readLine();
-			sequence = replaceNucs(sequence);
-			// System.out.println(sequence);
-			double[] gene = processSequencebyKmer(sequence, kmerToDo);
-			double sumGene = 0.0;
-			for(int i2 = 0; i2 < gene.length; i2++){
-				sumGene+=gene[i2];
-			}
-			for(int i2 = 0; i2 < gene.length; i2++){
-				gene[i2] = gene[i2]/sumGene;
-			}
-//			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
-//			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
-			Double[] coordArr = new Double[equationList.size()];
-			
-			for(int v = 0; v < equationList.size(); v ++){
-				coordArr[v] = getPCAX(gene, equationList.get(v));
-			}
-			Double[] coord1 = coordArr;
-			double[] coord = new double[coord1.length];
-			for(int c = 0; c < coord1.length; c ++){
-				coord[c] = coord1[c];
-			}
-			// adding them to plane by storing them as a number
-			// adding them to plane
-			if(!pegSet.containsKey(id)){
-				pegSet.put(id, 1);
-			}
-			else{
-				int whatever = pegSet.get(id);
-				pegSet.put(id, whatever + 1);
-			}
-			
-			
-			// if the coordinate isn't in the KDTree, insert into tree
-			if (test.search(coord) == null) {
-				test.insert(coord, id);
-				
-
-				// if a point has a similar cog value then they are part of a
-				// cluster
-				String clusterkey = id;
-//				String clusterkey = storage.get(i).Cog;
-				if (clusterMap.containsKey(clusterkey)) {
-					clusterMap.get(clusterkey).add(coord);
-				}
-				// if no cog value in the map
-				else {
-					clusterMap.put(clusterkey, new ArrayList<double[]>());
-					clusterMap.get(clusterkey).add(coord);
-				}
-				
-				
-			}
-			else if (test.search(coord) != null) {
-				// System.out.println(test.search(coord) + ", " +
-				// storage.get(i).Cog);
-				if(intersectionMap.get(test.search(coord)) == null){
-					intersectionMap.put(test.search(coord).toString(), new ArrayList<String>());
-				}
-				intersectionMap.get(test.search(coord)).add(id);
-				intersectionCount++;
-			}
-			
-			id = "";
-			sequence = "";
-			
-		}
+//		while((line=br.readLine()) != null){
+//			id=line;
+//			if(line.contains("USS-DB") || id.contains("hypothetical") || id.contains("Hypothetical")){
+//				sequence = br.readLine();
+//				id = "";
+//				sequence = "";
+//				continue;
+//			}
+//			sequence = br.readLine();
+//			sequence = replaceNucs(sequence);
+//			// System.out.println(sequence);
+//			double[] gene = processSequencebyKmer(sequence, kmerToDo);
+//			double sumGene = 0.0;
+//			for(int i2 = 0; i2 < gene.length; i2++){
+//				sumGene+=gene[i2];
+//			}
+//			for(int i2 = 0; i2 < gene.length; i2++){
+//				gene[i2] = gene[i2]/sumGene;
+//			}
+////			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
+////			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
+//			Double[] coordArr = new Double[equationList.size()];
+//			
+//			for(int v = 0; v < equationList.size(); v ++){
+//				coordArr[v] = getPCAX(gene, equationList.get(v));
+//			}
+//			Double[] coord1 = coordArr;
+//			double[] coord = new double[coord1.length];
+//			for(int c = 0; c < coord1.length; c ++){
+//				coord[c] = coord1[c];
+//			}
+//			// adding them to plane by storing them as a number
+//			// adding them to plane
+//			if(!pegSet.containsKey(id)){
+//				pegSet.put(id, 1);
+//			}
+//			else{
+//				int whatever = pegSet.get(id);
+//				pegSet.put(id, whatever + 1);
+//			}
+//			
+//			
+//			// if the coordinate isn't in the KDTree, insert into tree
+//			if (test.search(coord) == null) {
+////				test.insert(coord, id);
+//				
+//
+//				// if a point has a similar cog value then they are part of a
+//				// cluster
+////				String clusterkey = id;
+////				String clusterkey = storage.get(i).Cog;
+////				if (clusterMap.containsKey(clusterkey)) {
+////					clusterMap.get(clusterkey).add(coord);
+////				}
+////				// if no cog value in the map
+////				else {
+////					clusterMap.put(clusterkey, new ArrayList<double[]>());
+////					clusterMap.get(clusterkey).add(coord);
+////				}
+//				
+//				
+//			}
+//			else if (test.search(coord) != null) {
+//				// System.out.println(test.search(coord) + ", " +
+//				// storage.get(i).Cog);
+////				if(intersectionMap.get(coord) == null){
+////					intersectionMap.put(coord, new ArrayList<String>());
+////				}
+////				intersectionMap.get(coord).add(id);
+////				intersectionCount++;
+//			}
+//			
+//			id = "";
+//			sequence = "";
+//			
+//		}
 /**   TRAINING DATA END    **/
-		br.close();
+//		br.close();
 		System.out.println("training data finished");
-		for(String key : intersectionMap.keySet()){
-			intersectWriter.write(key +",");
-			for(String val : intersectionMap.get(key)){
-				if(!intersectionMap.get(key).isEmpty() || intersectionMap.get(key).size() > 0)
-					intersectWriter.write(val+"        ");
-			}
-			intersectWriter.write("\n");
-		}
-		intersectWriter.close();
+//		for(String key : intersectionMap.keySet()){
+//			intersectWriter.write(key +",");
+//			for(String val : intersectionMap.get(key)){
+//				if(!intersectionMap.get(key).isEmpty() || intersectionMap.get(key).size() > 0)
+//					intersectWriter.write(val+"        ");
+//			}
+//			intersectWriter.write("\n");
+//		}
+//		intersectWriter.close();
 		
 //		for (int i = 1; i < test.size(); i++) {
 //
@@ -374,7 +401,7 @@ public class KDTOnlyMain {
 //		Example.showWithSwing( graph );
 
 		System.out.println("KDTree size " + test.size());
-		System.out.println("intersection count " + (intersectionCount - test.size()));
+//		System.out.println("intersection count " + (intersectionCount - test.size()));
 		System.out.println("actual intersection count " + intersectionCount);
 /**4  tightness of cluster start **/
 //		HashMap<Integer, Double[]> centers = calculateClusterCenters(clusterMap);
@@ -565,6 +592,17 @@ public class KDTOnlyMain {
 							
 							else if (test.search(coord).equals(testSequences.get(sequences).Cog) == false) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
+//								for(double[] key : intersectionMap.keySet()){
+//									if(Arrays.equals(key, coord)){
+//										for(String id : intersectionMap.get(key)){
+//											if(id.equals(testSequences.get(sequences).Cog)){
+//												incrementHit();
+//												continue;
+//											}
+//										}
+//										
+//									}
+//								}
 								incrementMiss();
 							}
 						} catch (KeySizeException e) {
