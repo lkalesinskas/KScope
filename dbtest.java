@@ -42,7 +42,7 @@ public class dbtest {
 	static String table = "PCA3merTesting";
 
 	public static void main(String[] args) throws ClassNotFoundException, IOException {
-		kmerToDo =4;
+		kmerToDo =3;
 
 		Class.forName("com.mysql.jdbc.Driver");
 
@@ -77,7 +77,7 @@ public class dbtest {
 			eqnReader.close();
 			String prepsql = "";
 			//  create insert statement of size equationList.size for all dimensions
-			prepsql = "insert ignore into PCA4merTesting values (?,?,?,";
+			prepsql = "insert ignore into PCA3merTesting values (?,?,?,";
 			for(int i = 0; i < equationList.size(); i ++){
 				sql += "z" + i + " double,";
 //					sql +=",";

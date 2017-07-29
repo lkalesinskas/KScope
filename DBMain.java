@@ -8,7 +8,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -54,11 +56,13 @@ public class DBMain {
 	static String table = "PCA3merTesting";
 
 	public static void main(String[] args) throws ClassNotFoundException, IOException {
-		kmerToDo =4;
+		kmerToDo =3;
 
+		//  driver manager
 		Class.forName("com.mysql.jdbc.Driver");
 
 		try {
+			//  connect and create database if it doesnt exist
 			Connection con = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/", username, pswd);
 			Statement stmt;
 			Statement stmt2;
@@ -68,9 +72,11 @@ public class DBMain {
 			stmt2.executeUpdate("CREATE DATABASE IF NOT EXISTS FIGFAMS");
 			
 			con.close();
+			//  open connection to new db
 			Connection con2 = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/figfams", username, pswd);
 			stmt = con2.createStatement();
 			
+			//  create the table
 			String sql = "CREATE TABLE IF NOT EXISTS " + table +" "+
 	                "(uid int not NULL, " +
 					" id TEXT not NULL, "+
@@ -89,7 +95,7 @@ public class DBMain {
 			eqnReader.close();
 			String prepsql = "";
 			//  create insert statement of size equationList.size for all dimensions
-			prepsql = "insert ignore into PCA4merTesting values (?,?,?,";
+			prepsql = "insert ignore into PCA3merTesting values (?,?,?,";
 			for(int i = 0; i < equationList.size(); i ++){
 				sql += "z" + i + " double,";
 //					sql +=",";
@@ -105,21 +111,20 @@ public class DBMain {
 			prepsql+=")";
 			PreparedStatement ps = con2.prepareStatement(prepsql);
 			BufferedReader br = new BufferedReader(new FileReader("TrainOut3.ffn"));
+//			BufferedWriter distanceWriter = new BufferedWriter(new FileWriter("DistanceToOriginFromTraining.csv"));
 			int count = 0;
 			int uid = 0;
 			String id="";
 			String line = "";
 			String sequence = "";
+			System.out.println("inputting into db");
 			/**   TRAINING BEGIN   **/
-//			while((line = br.readLine()) != null){
-//				id = line;
-//				sequence = br.readLine();
-//				sequence = replaceNucs(sequence);
-//				if(count < 3037271){
-////					System.out.println(count);3037273
-//					count++;
-//					continue;
-//				}
+			while((line = br.readLine()) != null){
+				id = line;
+				// read sequence
+				sequence = br.readLine();
+				sequence = replaceNucs(sequence);
+				//  prepare sql statement
 //				sql = "insert ignore into "+table+" (uid,id,sequence,";
 //				for(int i = 0; i < equationList.size(); i ++){
 //					sql+="z"+i;
@@ -128,39 +133,74 @@ public class DBMain {
 //					}
 //				}
 //				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
-//				// calculate gene
-//				double[] gene = processSequencebyKmer(sequence, kmerToDo);
-//				double sumGene = 0.0;
-//				for(int i2 = 0; i2 < gene.length; i2++){
-//					sumGene+=gene[i2];
-//				}
-//				for(int i2 = 0; i2 < gene.length; i2++){
-//					gene[i2] = gene[i2]/sumGene;
-//				}
-//				//  calculate the coordinates
-//				for(int i = 0; i < equationList.size(); i ++){
-//					sql+= getPCAX(gene, equationList.get(i));
-//					if(i + 1 != equationList.size()){
-//						sql +=",";
-//					}
-//				}
-//				sql+=")";
-//				stmt.executeUpdate(sql);
-//				
-//				
-//				ps.setInt(1, uid);
-//				uid++;
-//				ps.setString(2, id);
-//				ps.setString(3, sequence);
-//				for(int i = 0; i < equationList.size(); i ++){
-//					int spot = i + 4;
-//					ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
-//				}
-////				ps.addBatch();
-//				count ++;
-//				
-//			}
-//			ps.executeBatch();
+				// calculate gene
+				double[] gene = processSequencebyKmer(sequence, kmerToDo);
+				double sumGene = 0.0;
+				for(int i2 = 0; i2 < gene.length; i2++){
+					sumGene+=gene[i2];
+				}
+				for(int i2 = 0; i2 < gene.length; i2++){
+					gene[i2] = gene[i2]/sumGene;
+				}
+				//  calculate the coordinates and the distance to the origin
+				double distance = 0.0;
+				double[] temp = new double[equationList.size()];
+				for(int i = 0; i < equationList.size(); i ++){
+					temp[i] = getPCAX(gene, equationList.get(i));
+					sql += temp[i];
+					distance += temp[i] * temp[i];
+					if(i + 1 != equationList.size()){
+						sql +=",";
+					}
+				}
+				distance = Math.sqrt(distance);
+//				distanceWriter.write(distance +",\n");
+				if(count > 3000000) break;
+				double tableName = round(distance,5);
+				String tableString = Double.toString(tableName).replace(".", "");
+				sql = "create table if not exists a" + tableString+" "+
+		                "(uid int not NULL, " +
+						" id TEXT not NULL, "+
+		                " sequence TEXT not NULL,";
+				for(int i = 0; i < equationList.size(); i ++){
+					sql += "z" + i + " double,";
+				}
+				sql += " PRIMARY KEY (uid))";
+				stmt.executeUpdate(sql);
+				sql = "insert ignore into a"+tableString+" (uid,id,sequence,";
+				for(int i = 0; i < equationList.size(); i ++){
+					sql+="z"+i;
+					if(i + 1 != equationList.size()){
+						sql +=",";
+					}
+				}
+				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
+				for(int i = 0; i < temp.length; i ++){
+					sql+= temp[i];
+					if(i + 1 != equationList.size()){
+						sql +=",";
+					}
+				}
+				sql+=")";
+				//  add to db
+				stmt.executeUpdate(sql);
+				
+				
+				ps.setInt(1, uid);
+				uid++;
+				ps.setString(2, id);
+				ps.setString(3, sequence);
+				for(int i = 0; i < equationList.size(); i ++){
+					int spot = i + 4;
+					ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
+				}
+				// do not uncomment or get rid of prepared statement code.  sql does not seem to work without it.   not sure why
+//				ps.addBatch();
+				count ++;
+				
+			}
+//			distanceWriter.close();
+			ps.executeBatch();
 			/**    TRAINING END     **/
 			ResultSet size = stmt.executeQuery("select count(*) from pca3mertesting");
 			while(size.next()){
@@ -170,8 +210,8 @@ public class DBMain {
 			File testFile = new File("TestOut3.ffn");
 			Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 			System.out.println("We have " + testSequences.size() + " test sequences!");
-			BufferedWriter bw = new BufferedWriter(new FileWriter("nearest100.csv"));
-			bw.write("IDs at target coord, Nearest IDs with sequence");
+//			BufferedWriter bw = new BufferedWriter(new FileWriter("nearest100.csv"));
+//			bw.write("IDs at target coord, Nearest IDs with sequence");
 			ExecutorService executor = Executors.newFixedThreadPool(10);
 			for(int runs = 0; runs < 1000; runs ++){
 				final int runs3 = runs;
@@ -200,15 +240,19 @@ public class DBMain {
 							
 							Double[] coord1 = coordArr;
 							double[] coord = new double[coord1.length];
+							double distance = 0.0;
 							for(int c = 0; c < coord1.length; c ++){
 								coord[c] = coord1[c];
+								distance += coord[c];
 							}
+							distance = Math.sqrt(distance);
+							String tableName = "a"+Double.toString(distance).replaceAll(".", "");
 							
 							//  random weird error happens without this
 							if(coordArr[0].isNaN() || coordArr[1].isNaN()) continue;
 						
 							try{
-								String sql = "select id from "+table+" where ";
+								String sql = "select id from "+tableName+" where ";
 								for(int i=0; i < coordArr.length; i ++){
 									
 									sql+="z"+i+"="+coordArr[i];
@@ -217,21 +261,31 @@ public class DBMain {
 									}
 								}
 								ResultSet rs = stmt.executeQuery(sql);
-								while(rs.next()){
-									String queriedID = rs.getString("id");
-									if(queriedID.equals("") || queriedID.equals(null) || queriedID==null){
-										if(nearest(coord,stmt).equals(testSequences.get(sequences).Cog)){
-											searchPositive ++;
+								if(rs != null){
+									do{
+										String queriedID = rs.getString("id");
+										if(queriedID.equals("") || queriedID.equals(null) || queriedID==null){
+											if(nearest(coord,stmt).equals(testSequences.get(sequences).Cog)){
+												searchPositive ++;
+											}
+											else {
+												searchNegative ++;
+											}
 										}
-										else {
-											searchNegative ++;
+										else if(queriedID.equals(testSequences.get(sequences).Cog)){
+											hit ++;
 										}
+										else if(queriedID.equals(testSequences.get(sequences).Cog) == false){
+											miss ++;
+										}
+									}while(rs.next());
+								}
+								else if(rs == null){
+									if(nearest(coord,stmt).equals(testSequences.get(sequences).Cog)){
+										searchPositive ++;
 									}
-									else if(queriedID.equals(testSequences.get(sequences).Cog)){
-										hit ++;
-									}
-									else if(queriedID.equals(testSequences.get(sequences).Cog) == false){
-										miss ++;
+									else {
+										searchNegative ++;
 									}
 								}
 								
@@ -313,7 +367,7 @@ public class DBMain {
 			while(!executor.isTerminated()){
 				
 			}
-			bw.close();
+//			bw.close();
 			/**   END TESTING   **/
 			System.out.println("Hits: " + hit);
 			System.out.println("Misclassified" + miss);
@@ -322,92 +376,6 @@ public class DBMain {
 			con2.close();
 			stmt.close();
 			
-//			String id = ">fig|657324.3.peg.930";
-//			double a = -127.18;
-//			double b = 51.72;
-////			sql = "insert into figfam values('"+id+"', -127.18, 51.72) where not exists(select "+id+" from figfam where id='" + id+"');";
-//			sql = "insert ignore into figfam (id, peg, x, y) values ('"+id+"','"+getPeg(id)+"', -127.18, 51.72)";
-//			sql = "insert ignore into figfam (id, peg, x, y) values ('>fig|657324.3.peg.933','"+getPeg(id)+"', -135.18, 51.72)";
-//			stmt.executeUpdate(sql);
-//			
-//			sql = "select id from figfam where x=" + a + " and y=1"+b;
-//			ResultSet rs = stmt.executeQuery(sql);
-//			while(rs.next()){
-//				String id2 = rs.getString("id");
-//				System.out.println(id2);
-//			}
-//			
-//			rs = stmt.executeQuery("select count(*) from figfam");
-//			while(rs.next()){
-//				System.out.println("total rows " + rs.getInt(1));
-//			}
-//			
-//			sql = "select x,y from figfam where peg='"+getPeg(id)+"'";
-//			double totalX = 0.0;
-//			double totalY = 0.0;
-//			int total = 0;
-//			rs = stmt.executeQuery(sql);
-//			while(rs.next()){
-//				totalX += rs.getDouble(1);
-//				totalY += rs.getDouble(2);
-//				total++;
-//			}
-//			
-//			System.out.println("total: " + total);
-//			System.out.println("av x: " + totalX/total);
-//			System.out.println("av y: " + totalY/total);
-//			
-//			double x1 = 0.0;
-//			double y1 = 0.0;
-//			double x2 = 0.0;
-//			double y2 = 0.0;
-//			double distance1 = 0.0;
-//			double distance2 = 0.0;
-//			double distance = 0.0;
-//			double[] coord = new double[2];
-//			
-//			sql = "select x,y from figfam where x < -130 or y < 52 order by x desc, y desc";
-//			
-//			rs = stmt.executeQuery(sql);
-//			while(rs.next()){
-//				System.out.println("found " + rs.getDouble(1) +" "+ rs.getDouble(2));
-//				x1=rs.getDouble(1);
-//				y1 = rs.getDouble(2);
-//				break;
-//			}
-//			sql = "select x,y from figfam where x > -130 or y > 52 order by x asc, y asc";
-//			
-//			rs = stmt.executeQuery(sql);
-//			while(rs.next()){
-//				System.out.println("found " + rs.getDouble(1) +" "+ rs.getDouble(2));
-//				x2=rs.getDouble(1);
-//				y2 = rs.getDouble(2);
-//				break;
-//			}
-//			
-//			distance1 = Math.sqrt((-130-x2)*(-130-x2) + (52-y2)*(52-y2));
-//			distance2 = Math.sqrt((x1+130)*(x1+130) + (y1-52)*(y1-52));
-//			coord[0] = (distance1 > distance2) ? x2 : x1;
-//			coord[1] = (distance1 > distance2) ? y2 : y1;
-//			
-//			System.out.println("x and y " + coord[0] + " " + coord[1]);
-//			sql = "select peg from figfam where x=" + coord[0] +" and y=" + coord[1];
-//			rs = stmt.executeQuery(sql);
-//			while(rs.next()){
-//				System.out.println("found " + rs.getString(1));
-//			}
-//
-//			stmt.close();
-//
-//			if (con != null) {
-//				con.close();
-//			}
-//		} catch (SQLException e) {
-//			// TODO Auto-generated catch block
-//			if (e.getErrorCode() == 1007) {
-//				System.out.println("db already made");
-//			} else
-//				e.printStackTrace();
 		
 		}catch(SQLException e){
 			if (e.getErrorCode() == 1007) {
@@ -417,6 +385,14 @@ public class DBMain {
 		}
 		
 		
+	}
+
+	private static double round(double distance, int places) {
+		if (places < 0) throw new IllegalArgumentException();
+
+	    BigDecimal bd = new BigDecimal(distance);
+	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+	    return bd.doubleValue();
 	}
 
 	/**
@@ -431,10 +407,6 @@ public class DBMain {
 		String rt = "";
 		double[] coordSet1 = new double[coord.length];
 		double[] coordSet2 = new double[coord.length];
-		double x1 = 0.0;
-		double y1 = 0.0;
-		double x2 = 0.0;
-		double y2 = 0.0;
 		double distance1 = 0.0;
 		double distance2 = 0.0;
 		
@@ -447,7 +419,7 @@ public class DBMain {
 				sql+=",";
 			}
 		}
-		sql+=" from PCA4merTesting where ";
+		sql+=" from "+table+" where ";
 		for(int i = 0; i < coord.length; i ++){
 			sql+="z"+i+"<="+coord[i];
 			if(i+1 != coord.length){
@@ -455,7 +427,13 @@ public class DBMain {
 			}
 		}
 		
-		sql+= " order by x desc, y desc";
+		sql+= " order by ";
+		for(int i =0; i < coord.length; i ++){
+			sql+="z"+i +" desc";
+			if(i+1 != coord.length){
+				sql+=",";
+			}
+		}
 		
 		ResultSet rs = stmt.executeQuery(sql);
 		while(rs.next()){
@@ -472,7 +450,7 @@ public class DBMain {
 					sql+=",";
 				}
 			}
-			sql+=" from PCA4merTesting where ";
+			sql+=" from "+table+" where ";
 			for(int i = 0; i < coord.length; i ++){
 				sql+="z"+i+">="+coord[i];
 				if(i+1 != coord.length){
@@ -480,7 +458,13 @@ public class DBMain {
 				}
 			}
 			
-			sql+= " order by x asc, y asc";		
+			sql+= " order by ";
+			for(int i =0; i < coord.length; i ++){
+				sql+="z"+i +" asc";
+				if(i+1 != coord.length){
+					sql+=",";
+				}
+			}
 		rs = stmt.executeQuery(sql);
 		while(rs.next()){
 			for(int i = 0; i < rs.getMetaData().getColumnCount(); i ++){
@@ -500,7 +484,7 @@ public class DBMain {
 		distance2 = Math.sqrt(distance2);
 		coord = (distance1 > distance2) ? coordSet1 : coordSet2;
 		
-		sql = "select id from PCA4merTesting where ";
+		sql = "select id from "+table+" where x=" + coord[0] +" and y=" + coord[1];
 		for(int i=0; i < coord.length; i ++){
 			sql+="z"+i+"="+coord[i];
 			if(i+1!=coord.length){
@@ -552,7 +536,6 @@ public class DBMain {
 	}
 
 	private static double getPCAY(double[] kmer, double[] pcaArr) {
-		//  0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15
 		double retval = 0.0;
 		
 		for(int i = 0; i < kmer.length; i ++){
@@ -560,13 +543,9 @@ public class DBMain {
 		}
 		
 		return retval;
-//		return   0.414 * kmer[12] - 0.39 * kmer[6] + 0.379 * kmer[0] + 0.379 * kmer[15] - 0.333 * kmer[9] + 0.309 * kmer[3]
-//				- 0.294 * kmer[10] - 0.294 * kmer[5] - 0.054 * kmer[8] - 0.054 * kmer[13] + 0.039 * kmer[7] + 0.039 * kmer[2]
-//						- 0.023 * kmer[11] - 0.023 * kmer[1] + 0.005 * kmer[4] + 0.005 * kmer[14];
 	}
 
 	private static double getPCAX(double[] kmer, double[] pcaArr) {
-		// -0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13
 		
 		double retval = 0.0;
 		
@@ -576,9 +555,6 @@ public class DBMain {
 		
 		return retval;
 		
-//		return -0.278 * kmer[14] - 0.278* kmer[4] - 0.278*kmer[2] - 0.278 * kmer[7] - 0.278 * kmer[11] - 0.278 * kmer[1] - 0.276 * kmer[8] 
-//				- 0.276 * kmer[13] - 0.238 * kmer[5] - 0.238 * kmer[10] - 0.235 * kmer[3] - 0.224* kmer[9] - 0.211 * kmer[0] 
-//						- 0.211 * kmer[15] - 0.201 * kmer[6] - 0.191 * kmer[12];
 	}
 
 	private static void findNearestSequencesS(String currpeg, File f, int filenum) throws IOException {

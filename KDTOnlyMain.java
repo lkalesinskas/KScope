@@ -30,7 +30,7 @@ import edu.wlu.cs.levy.CG.KeySizeException;
  *
  */
 public class KDTOnlyMain {
-	private static int TOTAL_VALS = 9000000;
+	private static int TOTAL_VALS = 3000000;
 	public static int nmer = 0;
 	public static int kmerMax = 9;
 	public static int numShifts = 0;
@@ -58,61 +58,24 @@ public class KDTOnlyMain {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("TrainOut3.ffn");
+		File geneFile = new File("trainOut5.ffn");
 
-		// Getting sequence
-//		String sequence1 = inputGenomeSequence(genome1);
-//		String sequence2 = inputGenomeSequence(genome2);
-//		String sequence3 = inputGenomeSequence(genome3);  // z axis
-//		String sequence4 = inputGenomeSequence(genome4);  // q axis
-//		String sequence5 = inputGenomeSequence(genome5);  // r axis
-		// Gets KmerComposition Arrays of each Axis
-//		double[] xAxis = processSequencebyKmer(sequence1, kmerToDo);
-//		double[] yAxis = processSequencebyKmer(sequence2, kmerToDo);
-//		double[] zAxis = processSequencebyKmer(sequence3, kmerToDo);
-//		double[] qAxis = processSequencebyKmer(sequence4, kmerToDo);
-//		double[] rAxis = processSequencebyKmer(sequence5, kmerToDo);
-
-		// ensure the kmer composition processing worked
-//		for (int i = 0; i < xAxis.length; i++) {
-//			System.out.print(yAxis[i] + ", ");
-//		}
-//		System.out.println();
-//		for (int i = 0; i < xAxis.length; i++) {
-//			System.out.print(xAxis[i] + ", ");
-//		}
-//		System.out.println();
-//		for (int i = 0; i < zAxis.length; i++) {
-//			System.out.print(zAxis[i] + ", ");
-//		}
-//		System.out.println();
-//		for (int i = 0; i < qAxis.length; i++) {
-//			System.out.print(qAxis[i] + ", ");
-//		}
-//		System.out.println();
-//		for (int i = 0; i < rAxis.length; i++) {
-//			System.out.print(rAxis[i] + ", ");
-//		}
-//		System.out.println();
-		
-		// Inputs and Stores all genes in storage vector
-//		System.out.println("Inputting Figgies");
-//		double[] parsedPCAX = parsePCAText("-0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13");
-//		double[] parsedPCAY = parsePCAText("0.414kmer13-0.39kmer7+0.379kmer1+0.379kmer16-0.333kmer10+0.309kmer4-0.294kmer11-0.294kmer6-0.054kmer9-0.054kmer14+0.039kmer8+0.039kmer3-0.023kmer12-0.023kmer2+0.005kmer5+0.005kmer15");
-		
-//		Vector<Gene> storage = InputAndProcessGenesLine(geneFile, parsedPCAX, parsedPCAY);
-		
+		// Getting sequence		
 		System.out.println("Making KD Tree");
 		//  reading equations
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("percentage3merPCA2.txt"));
+		BufferedReader bufferedReader = new BufferedReader(new FileReader("spanPCA"));
 		String line = "";
 		int count = 0;
+		
+		//  reading and parsing PCA equations
 		List<double[]> equationList = new ArrayList<double[]>();
 		while ((line = bufferedReader.readLine()) != null) {
 			equationList.add(parsePCAText(line));
 		}
 			bufferedReader.close();
+			
+			//  the kdt will have dimensions equal to the size of the equation list
 		KDTree test = new KDTree(equationList.size());
 //		test = InputAndProcessGenesLineKDT(geneFile, parsedPCAX, parsedPCAY);
 		HashMap<String, Integer> pegSet = new HashMap<String, Integer>();
@@ -122,24 +85,26 @@ public class KDTOnlyMain {
 		System.out.println("Correlating");
 		
 		
-		//  intersection file
-		BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("intersections_with_KDT.csv"));
-		intersectWriter.write("ID, Sequence,\n");
+		//  intersection file for those not included in tree
+//		BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("intersections_with_KDT.csv"));
+//		intersectWriter.write("ID, Sequence,\n");
 //		HashMap<double[], List<String>> intersectionMap = new HashMap<double[], List<String>>();
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String id = "";
 		String sequence = "";
-		BufferedWriter coordWriter = new BufferedWriter(new FileWriter("In_KDT.csv"));
-		coordWriter.write("ID,Sequence,");
-		for(int i = 0; i < equationList.size(); i ++){
-			coordWriter.write("z"+i+",");
-		}
-		coordWriter.write("\n");
-		for(int i = 0; i < equationList.size(); i ++){
-			intersectWriter.write("z"+i+",");
-		}
-		intersectWriter.write("\n");
-		
+		//  coords in KDT as per Larry request
+//		BufferedWriter coordWriter = new BufferedWriter(new FileWriter("In_KDT.csv"));
+//		coordWriter.write("ID,Sequence,");
+//		for(int i = 0; i < equationList.size(); i ++){
+//			coordWriter.write("z"+i+",");
+//		}
+//		coordWriter.write("\n");
+//		for(int i = 0; i < equationList.size(); i ++){
+//			intersectWriter.write("z"+i+",");
+//		}
+//		intersectWriter.write("\n");
+//		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("trainOut5.ffn"));
+//		BufferedWriter testWriter = new BufferedWriter(new FileWriter("testOut5.ffn"));
 		while( (line = br.readLine()) != null){
 
 /**   INSERTING INTO TREE OR STORAGE VECTOR    **/
@@ -152,6 +117,11 @@ public class KDTOnlyMain {
 			
 			id = line;
 			sequence = br.readLine();
+			if(line.contains("USS-DB") || sequence.equals("") || sequence.length() < 100){
+				id="";
+				sequence="";
+				continue;
+			}
 			sequence = replaceNucs(sequence);
 			sequence = sequence.substring(60, sequence.length() - 2);
 			// System.out.println(sequence);
@@ -186,30 +156,36 @@ public class KDTOnlyMain {
 				
 				
 				if(test.search(coord) == null){
-					coordWriter.write(id+","+sequence+",");
-					for(int i = 0; i < equationList.size(); i ++){
-						coordWriter.write(coord[i] +",");
-					}
-					coordWriter.write("\n");
+//					coordWriter.write(id+","+sequence+",");
+//					for(int i = 0; i < equationList.size(); i ++){
+//						coordWriter.write(coord[i] +",");
+//					}
+//					coordWriter.write("\n");
 					test.insert(coord, id);
+//					trainWriter.write(id+"\n");
+//					trainWriter.write(sequence+"\n");
 				}
 				else if(test.search(coord) != null){
-					intersectWriter.write(id+","+sequence+",");
-					for(int i = 0; i < equationList.size(); i ++){
-						intersectWriter.write(coord[i] +",");
-					}
-					intersectWriter.write("\n");
+//					intersectWriter.write(id+","+sequence+",");
+//					for(int i = 0; i < equationList.size(); i ++){
+//						intersectWriter.write(coord[i] +",");
+//					}
+//					intersectWriter.write("\n");
 					intersectionCount ++;
+//					testWriter.write(id+"\n");
+//					testWriter.write(sequence+"\n");
 				}
 				count++;
 			}
-			 if (count>TOTAL_VALS) {
-//			if (count > 1000) {
-				break;
-			}
+//			 if (count>TOTAL_VALS) {
+////			if (count > 1000) {
+//				break;
+//			}
 		}
-		coordWriter.close();
-		intersectWriter.close();
+//		trainWriter.close();
+//		testWriter.close();
+//		coordWriter.close();
+//		intersectWriter.close();
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
 		System.out.println("finished initial tree inserts");
 			System.gc();
@@ -495,10 +471,26 @@ public class KDTOnlyMain {
 		/* DONE TRAINING MODEL */
 
 		// testing the file of the subset of figs
-		File testFile = new File("TestOut3.ffn");
+		
+		File testFile = new File("testOut5.ffn");
+		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOut.csv"));
+		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
+		testWriter.write("\n");
+		//  get rid of for loop when done running through 100 sequences
+		for(int i = 0; i < 100; i ++){
+			testFile = new File("D:\\Larry Projects\\KSCOPE\\FinishingKScopeOff\\test"+i+".ffn");
+//		testFile = new File("testOut5.ffn");
 		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
-		
+		miss = 0;
+		hit = 0;
+		nothingThere = 0;
+		searchPositive = 0;
+		searchNegative = 0;
+		inSet = 0;
+		outSet = 0;
+		HashMap<String, Double> correctIDHit = new HashMap<String, Double>();
+		HashMap<String, Double> allIDHit = new HashMap<String, Double>();
 
 //		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
 //		PrintWriter pws = new PrintWriter(new File("Threshold_Small.csv"));
@@ -512,57 +504,61 @@ public class KDTOnlyMain {
 //		sameCogWriterMed.write('\n');
 //		nearWriter.write("peg #, coords away");
 //		nearWriter.write('\n');
-		StringBuilder sb = new StringBuilder();
-		sb.append("peg #");
-		sb.append(',');
-		sb.append("Other 0.0 - 0.001");
-		sb.append(',');
-		sb.append("Other 0.001 - 0.01");
-		sb.append(',');
+//		StringBuilder sb = new StringBuilder();
+//		sb.append("peg #");
+//		sb.append(',');
+//		sb.append("Other 0.0 - 0.001");
+//		sb.append(',');
+//		sb.append("Other 0.001 - 0.01");
+//		sb.append(',');
 //		sb.append("Other 0.01 - 0.1");
 //		sb.append(',');
 //		sb.append("# of points with same CSV");
-		sb.append('\n');
+//		sb.append('\n');
 //		pw.write(sb.toString());
 //		pws.write(sb.toString());
 //		pwm.write("peg #, Other 0.0 - 0.01,");
 //		pwm.write('\n');
 		int filenum = 0;
 
+		
+		//  thread pool.  10 threads seems to cut runtime down to half an hour
 		ExecutorService executor = Executors.newFixedThreadPool(10);
 		for(int runs = 0; runs < 1000; runs ++){
 			final int runs3 = runs;
 			Runnable r = new Runnable(){
 				public void run(){
+					//  total from test file is runs * sequences
 					for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
 						//  get the kmervector
-						double[] gene = testSequences.get(sequences).kmerVector.clone();
-						double sumGene = 0.0;
-						for(int i2 = 0; i2 < gene.length; i2++){
-							sumGene+=gene[i2];
-						}
-						for(int i2 = 0; i2 < gene.length; i2++){
-							gene[i2] = gene[i2]/sumGene;
-						}
+						try{
+							double[] gene = testSequences.get(sequences).kmerVector.clone();
+							double sumGene = 0.0;
+							for(int i2 = 0; i2 < gene.length; i2++){
+								sumGene+=gene[i2];
+							}
+							for(int i2 = 0; i2 < gene.length; i2++){
+								gene[i2] = gene[i2]/sumGene;
+							}
+							
+							//  begin calculating the coordinates for the test sequences
+							Double[] coordArr = new Double[equationList.size()];
+							for(int v = 0; v < equationList.size(); v ++){
+								coordArr[v] = getPCAX(gene, equationList.get(v));
+							}
+							
+							
+							Double[] coord1 = coordArr;
+							double[] coord = new double[coord1.length];
+							for(int c = 0; c < coord1.length; c ++){
+								coord[c] = coord1[c];
+							}
+							
+							
+							//  random weird error happens without this
+							if(coordArr[0].isNaN() || coordArr[1].isNaN()) continue;
 						
-						//  begin calculating the coordinates for the test sequences
-						Double[] coordArr = new Double[equationList.size()];
-						for(int v = 0; v < equationList.size(); v ++){
-							coordArr[v] = getPCAX(gene, equationList.get(v));
-						}
-						
-						
-						Double[] coord1 = coordArr;
-						double[] coord = new double[coord1.length];
-						for(int c = 0; c < coord1.length; c ++){
-							coord[c] = coord1[c];
-						}
-						
-						
-						//  random weird error happens without this
-						if(coordArr[0].isNaN() || coordArr[1].isNaN()) continue;
-						try {
 							// if it is not in the grid, look at the nearest one.
 							if (test.search(coord) == null) {
 								// if the classification is the same, then we are right
@@ -570,6 +566,18 @@ public class KDTOnlyMain {
 								if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 //									System.out.println("incrementing positive search");
 									incrementSearchPositive();
+//									if(correctIDHit.containsKey(test.search(coord).toString()) ){
+//										correctIDHit.put(test.search(coord).toString(), correctIDHit.get(test.search(coord).toString()) +1);
+//									}
+//									else{
+//										correctIDHit.put(test.search(coord).toString(), 1.0);
+//									}
+//									if(allIDHit.containsKey(test.search(coord).toString())){
+//										allIDHit.put(test.search(coord).toString(), allIDHit.get(test.search(coord).toString()) +1);
+//									}
+//									else{
+//										allIDHit.put(test.search(coord).toString(), 1.0);
+//									}
 								}else{
 									/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 									
@@ -582,14 +590,27 @@ public class KDTOnlyMain {
 									}
 									incrementSearchNegative();
 									
+//									if(allIDHit.containsKey(test.search(coord).toString())){
+//										allIDHit.put(test.search(coord).toString(), allIDHit.get(test.search(coord).toString()) +1);
+//									}
+//									else{
+//										allIDHit.put(test.search(coord).toString(), 1.0);
+//									}
+									
 								}
 							}
 							// if we search and land on top of another coordinate
 							else if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 								incrementHit();
+//								if(correctIDHit.containsKey(test.search(coord).toString())){
+//									correctIDHit.put(test.search(coord).toString(), correctIDHit.get(test.search(coord).toString()) +1);
+//								}
+//								else{
+//									correctIDHit.put(test.search(coord).toString(), 1.0);
+//								}
 							}
-							
+							//  hits something, but not the correct values
 							else if (test.search(coord).equals(testSequences.get(sequences).Cog) == false) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 //								for(double[] key : intersectionMap.keySet()){
@@ -604,10 +625,22 @@ public class KDTOnlyMain {
 //									}
 //								}
 								incrementMiss();
+//								if(allIDHit.containsKey(test.search(coord).toString())){
+//									allIDHit.put(test.search(coord).toString(), allIDHit.get(test.search(coord).toString()) +1);
+//								}
+//								else{
+//									allIDHit.put(test.search(coord).toString(), 1.0);
+//								}
 							}
-						} catch (KeySizeException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+						} catch (KeySizeException | ArrayIndexOutOfBoundsException e) {
+							// Array Index Out Of Bounds  is being caused by all the test files being less than 100k sequences in size
+							
+							if(e instanceof ArrayIndexOutOfBoundsException){
+								break;
+							}
+							else{
+								e.printStackTrace();
+							}
 						}
 						
 					}
@@ -615,12 +648,21 @@ public class KDTOnlyMain {
 			};
 			executor.execute(r);
 		}
+		
+		//  shutdown each thread as it finishes
 		executor.shutdown();
 		
+		//  wait for the threads to finish
 		while(!executor.isTerminated()){
 			
 		}
 	
+//		BufferedWriter percentHitWriter = new BufferedWriter(new FileWriter("Percentage Hit.csv"));
+//		percentHitWriter.write("ID hit, percentage hit,\n");
+//		for(String key : correctIDHit.keySet()){
+//			percentHitWriter.write(key + "," + (correctIDHit.get(key) / allIDHit.get(key)));
+//		}
+//		percentHitWriter.close();
 
 		// takes kmer vector and creates the kmer count
 //		for (int i = 2; i < testSequences.size(); i++) {
@@ -848,14 +890,23 @@ public class KDTOnlyMain {
 //		sameCogWriterSmall.close();
 //		sameCogWriterMed.close();
 //		nearWriter.close();
+		System.out.println("for test " + i);
 		System.out.println("Hits: " + getHits());
-		System.out.println("Misclassified" + getMisses());
+		testWriter.write(getHits()+",");
+		System.out.println("Misclassified " + getMisses());
+		testWriter.write(getMisses()+",");
 		System.out.println("Nothing there" + getNothingThere());
+		testWriter.write(getNothingThere()+",");
 		System.out.println("Search Positive: " + getSearchPositive());
+		testWriter.write(getSearchPositive()+",");
 		System.out.println("Search Negative: " + getSearchNegative());
+		testWriter.write(getSearchNegative()+",");
 		System.out.println("in missed set: " + inSet);
+		testWriter.write(inSet+",");
 		System.out.println("not in missed set: " + outSet);
-
+		testWriter.write(outSet+",\n");
+		}
+		testWriter.close();
 		// for(String key : lowHitThresholdMap.keySet()){
 		// PrintWriter pw = new PrintWriter(new File("low hit threshold.csv"));
 		// StringBuilder sb = new StringBuilder();
@@ -1056,7 +1107,6 @@ public class KDTOnlyMain {
 				break;
 			}
 
-			// System.out.println(sequence);
 			// if (count>TOTAL_VALS) {
 			id = "";
 			sequence = "";
@@ -1165,7 +1215,6 @@ public class KDTOnlyMain {
 		}
 		pw.write(sb.toString());
 		pw.close();
-		System.out.println("CSV distance file written");
 
 	}
 
@@ -1324,6 +1373,11 @@ public class KDTOnlyMain {
 			}
 			id = line;
 			sequence = bufferedReader.readLine();
+			if(sequence.length() < 100){
+				sequence = "";
+				id = "";
+				continue;
+			}
 			sequence = replaceNucs(sequence);
 			sequence = sequence.substring(60, sequence.length() - 2);
 			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
@@ -1366,7 +1420,6 @@ public class KDTOnlyMain {
 			sequence = bufferedReader.readLine();
 			sequence = replaceNucs(sequence);
 			sequence = sequence.substring(60, sequence.length() - 2);
-			// System.out.println(sequence);
 //			storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
 			storage.add(new Gene(id, getPCAX(processSequencebyKmer(sequence, kmerToDo), xEQN), getPCAY(processSequencebyKmer(sequence, kmerToDo), yEQN)));
 			
@@ -1537,11 +1590,14 @@ public class KDTOnlyMain {
 		nmer = mermer;
 		numShifts = 64 - (2 * (nmer - 1));
 		numShiftsMinus = numShifts - 2;
+		sequence = replaceNucs(sequence);
+		
 		double[] comps = runGetKmers(sequence);
 		return comps;
 	}
 
 	public static double[] runGetKmers(String sequence) {
+		sequence = replaceNucs(sequence);
 		double[] kmerComp = new double[(int) Math.pow(4, nmer)];
 		String[] toRun = sequence.split("N");
 		for (int i = 0; i < toRun.length; i++) {
@@ -1570,6 +1626,7 @@ public class KDTOnlyMain {
 				full = full + temp;
 			} catch (NullPointerException e) {
 				System.out.println(sequence.substring(i));
+				System.out.println("replaced   i="+i+"      " + replaceNucs(sequence));
 			}
 			// full = full + temp;
 			if (i < nmer - 1) {
