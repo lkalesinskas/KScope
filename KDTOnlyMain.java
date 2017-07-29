@@ -476,7 +476,8 @@ public class KDTOnlyMain {
 		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOut.csv"));
 		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
 		testWriter.write("\n");
-		//  get rid of for loop when done running through 100 sequences
+		/** begin loop for 100k test files   **/
+		//  begin loop for running through 100 test files of 100k
 		for(int i = 0; i < 100; i ++){
 			testFile = new File("D:\\Larry Projects\\KSCOPE\\FinishingKScopeOff\\test"+i+".ffn");
 //		testFile = new File("testOut5.ffn");
@@ -531,7 +532,7 @@ public class KDTOnlyMain {
 					//  total from test file is runs * sequences
 					for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
-						//  get the kmervector
+						//  get the kmer vector
 						try{
 							double[] gene = testSequences.get(sequences).kmerVector.clone();
 							double sumGene = 0.0;
