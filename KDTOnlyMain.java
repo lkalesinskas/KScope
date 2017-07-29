@@ -103,6 +103,7 @@ public class KDTOnlyMain {
 //			intersectWriter.write("z"+i+",");
 //		}
 //		intersectWriter.write("\n");
+		/**  the writers for train and test out that will be used for the spanning set   **/
 //		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("trainOut5.ffn"));
 //		BufferedWriter testWriter = new BufferedWriter(new FileWriter("testOut5.ffn"));
 		while( (line = br.readLine()) != null){
@@ -154,7 +155,7 @@ public class KDTOnlyMain {
 					coordArr[v] = getPCAX(gene, equationList.get(v));
 				}
 				
-				
+				/**   if a search at the coord yields nothing  **/
 				if(test.search(coord) == null){
 //					coordWriter.write(id+","+sequence+",");
 //					for(int i = 0; i < equationList.size(); i ++){
@@ -162,6 +163,7 @@ public class KDTOnlyMain {
 //					}
 //					coordWriter.write("\n");
 					test.insert(coord, id);
+					/**  put into training data    **/
 //					trainWriter.write(id+"\n");
 //					trainWriter.write(sequence+"\n");
 				}
@@ -172,6 +174,7 @@ public class KDTOnlyMain {
 //					}
 //					intersectWriter.write("\n");
 					intersectionCount ++;
+					/**   if intersection then write to the test file that will be broken up into smaller 100k files later   **/
 //					testWriter.write(id+"\n");
 //					testWriter.write(sequence+"\n");
 				}
