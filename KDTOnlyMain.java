@@ -45,7 +45,7 @@ public class KDTOnlyMain {
 	static int outSet = 0;
 	double[] gene;
 
-	public static void main(String[] args) throws Exception {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile) throws Exception {
 
 		// kmer size we are using
 		kmerToDo = 3;
@@ -58,7 +58,7 @@ public class KDTOnlyMain {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("trainOut5.ffn");
+		File geneFile = new File("trainOut6.fasta");
 
 		// Getting sequence		
 		System.out.println("Making KD Tree");
@@ -83,7 +83,7 @@ public class KDTOnlyMain {
 		int intersectionCount = 0;
 		HashMap<String, List<double[]>> clusterMap = new HashMap<String, List<double[]>>();
 		System.out.println("Correlating");
-		
+		boolean first = true;
 		
 		//  intersection file for those not included in tree
 //		BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("intersections_with_KDT.csv"));
@@ -104,86 +104,142 @@ public class KDTOnlyMain {
 //		}
 //		intersectWriter.write("\n");
 		/**  the writers for train and test out that will be used for the spanning set   **/
-//		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("trainOut5.ffn"));
-//		BufferedWriter testWriter = new BufferedWriter(new FileWriter("testOut5.ffn"));
+//		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("trainOut6abc.ffn"));
+//		BufferedWriter testWriter = new BufferedWriter(new FileWriter("testOut6abc.ffn"));
 		while( (line = br.readLine()) != null){
 
 /**   INSERTING INTO TREE OR STORAGE VECTOR    **/
-			if(line.contains("USS-DB")){
-				sequence = br.readLine();
-				id = "";
-				sequence = "";
-				continue;
-			}
-			
-			id = line;
-			sequence = br.readLine();
-			if(line.contains("USS-DB") || sequence.equals("") || sequence.length() < 100){
-				id="";
-				sequence="";
-				continue;
-			}
-			sequence = replaceNucs(sequence);
-			sequence = sequence.substring(60, sequence.length() - 2);
-			// System.out.println(sequence);
-			double[] gene = processSequencebyKmer(sequence, kmerToDo);
-			double sumGene = 0.0;
-			for(int i2 = 0; i2 < gene.length; i2++){
-				sumGene+=gene[i2];
-			}
-			for(int i2 = 0; i2 < gene.length; i2++){
-				gene[i2] = gene[i2]/sumGene;
-			}
-//			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
-//			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
-			Double[] coordArr = new Double[equationList.size()];
-			
-			for(int v = 0; v < equationList.size(); v ++){
-				coordArr[v] = getPCAX(gene, equationList.get(v));
-			}
-			
-			
-			
-			Double[] coord1 = coordArr;
-			double[] coord = new double[coord1.length];
-			for(int c = 0; c < coord1.length; c ++){
-				coord[c] = coord1[c];
-			}
-			if (!id.contains("hypothetical") || !id.contains("Hypothetical") || !line.contains("USS-DB")) {
-				
-				for(int v = 0; v < equationList.size(); v ++){
-					coordArr[v] = getPCAX(gene, equationList.get(v));
+			if(line.contains(">")){
+				if(first){
+					id = line;
+					first = false;
+					continue;
 				}
-				
-				/**   if a search at the coord yields nothing  **/
-				if(test.search(coord) == null){
-//					coordWriter.write(id+","+sequence+",");
-//					for(int i = 0; i < equationList.size(); i ++){
-//						coordWriter.write(coord[i] +",");
+				else{
+					if(id.contains("hypothetical") || id.contains("Hypothetical") || id.contains("USS-DB") || sequence.length() < 100){
+						sequence = "";
+						id=line;
+						continue;
+					}
+					sequence = replaceNucs(sequence);
+					sequence = sequence.substring(60, sequence.length() - 2);
+					double[] gene = processSequencebyKmer(sequence, kmerToDo);
+					double sumGene = 0.0;
+					for(int i2 = 0; i2 < gene.length; i2++){
+						sumGene+=gene[i2];
+					}
+					for(int i2 = 0; i2 < gene.length; i2++){
+						gene[i2] = gene[i2]/sumGene;
+					}
+					
+					Double[] coordArr = new Double[equationList.size()];
+					
+					for(int v = 0; v < equationList.size(); v ++){
+						coordArr[v] = getPCAX(gene, equationList.get(v));
+					}
+					
+					
+					
+					Double[] coord1 = coordArr;
+					double[] coord = new double[coord1.length];
+					for(int c = 0; c < coord1.length; c ++){
+						coord[c] = coord1[c];
+					}
+					
+					
+					for(int v = 0; v < equationList.size(); v ++){
+						coordArr[v] = getPCAX(gene, equationList.get(v));
+					}
+					/**   if a search at the coord yields nothing  **/
+					if(test.search(coord) == null){
+						test.insert(coord, id);
+					}
+					else if(test.search(coord) != null){
+						intersectionCount ++;
+					}
+					count++;
+					sequence = "";
+					id = line;
+				}
+//				if(line.contains("USS-DB")){
+//					sequence = br.readLine();
+//					id = "";
+//					sequence = "";
+//					continue;
+//				}
+//				
+//				id = line;
+//				sequence = br.readLine();
+//				if(line.contains("USS-DB") || sequence.equals("") || sequence.length() < 100){
+//					id="";
+//					sequence="";
+//					continue;
+//				}
+//				sequence = replaceNucs(sequence);
+//				sequence = sequence.substring(60, sequence.length() - 2);
+//				// System.out.println(sequence);
+//				double[] gene = processSequencebyKmer(sequence, kmerToDo);
+//				double sumGene = 0.0;
+//				for(int i2 = 0; i2 < gene.length; i2++){
+//					sumGene+=gene[i2];
+//				}
+//				for(int i2 = 0; i2 < gene.length; i2++){
+//					gene[i2] = gene[i2]/sumGene;
+//				}
+////			Double a = getPCAX(processSequencebyKmer(sequence, kmerToDo), parsedPCAX);
+////			Double b = getPCAY(processSequencebyKmer(sequence, kmerToDo), parsedPCAY);
+//				Double[] coordArr = new Double[equationList.size()];
+//				
+//				for(int v = 0; v < equationList.size(); v ++){
+//					coordArr[v] = getPCAX(gene, equationList.get(v));
+//				}
+//				
+//				
+//				
+//				Double[] coord1 = coordArr;
+//				double[] coord = new double[coord1.length];
+//				for(int c = 0; c < coord1.length; c ++){
+//					coord[c] = coord1[c];
+//				}
+//				if (!id.contains("hypothetical") || !id.contains("Hypothetical") || !line.contains("USS-DB")) {
+//					
+//					for(int v = 0; v < equationList.size(); v ++){
+//						coordArr[v] = getPCAX(gene, equationList.get(v));
 //					}
-//					coordWriter.write("\n");
-					test.insert(coord, id);
-					/**  put into training data    **/
-//					trainWriter.write(id+"\n");
-//					trainWriter.write(sequence+"\n");
-				}
-				else if(test.search(coord) != null){
-//					intersectWriter.write(id+","+sequence+",");
-//					for(int i = 0; i < equationList.size(); i ++){
-//						intersectWriter.write(coord[i] +",");
+//					
+//					/**   if a search at the coord yields nothing  **/
+//					if(test.search(coord) == null){
+////					coordWriter.write(id+","+sequence+",");
+////					for(int i = 0; i < equationList.size(); i ++){
+////						coordWriter.write(coord[i] +",");
+////					}
+////					coordWriter.write("\n");
+//						test.insert(coord, id);
+//						/**  put into training data    **/
+////					trainWriter.write(id+"\n");
+////					trainWriter.write(sequence+"\n");
 //					}
-//					intersectWriter.write("\n");
-					intersectionCount ++;
-					/**   if intersection then write to the test file that will be broken up into smaller 100k files later   **/
-//					testWriter.write(id+"\n");
-//					testWriter.write(sequence+"\n");
-				}
-				count++;
-			}
+//					else if(test.search(coord) != null){
+////					intersectWriter.write(id+","+sequence+",");
+////					for(int i = 0; i < equationList.size(); i ++){
+////						intersectWriter.write(coord[i] +",");
+////					}
+////					intersectWriter.write("\n");
+//						intersectionCount ++;
+//						/**   if intersection then write to the test file that will be broken up into smaller 100k files later   **/
+////					testWriter.write(id+"\n");
+////					testWriter.write(sequence+"\n");
+//					}
+//					count++;
+//				}
 //			 if (count>TOTAL_VALS) {
 ////			if (count > 1000) {
 //				break;
 //			}
+			}
+			else{
+				sequence += line;
+			}
 		}
 //		trainWriter.close();
 //		testWriter.close();
@@ -475,14 +531,15 @@ public class KDTOnlyMain {
 
 		// testing the file of the subset of figs
 		
-		File testFile = new File("testOut5.ffn");
-		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOut.csv"));
-		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
-		testWriter.write("\n");
+		File testFile = new File("testOut6.fasta");
+		BufferedWriter outfasta = new BufferedWriter(new FileWriter("outFasta.fasta"));
+//		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOutabc.csv"));
+//		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
+//		testWriter.write("\n");
 		/** begin loop for 100k test files   **/
 		//  begin loop for running through 100 test files of 100k
-		for(int i = 0; i < 100; i ++){
-			testFile = new File("D:\\Larry Projects\\KSCOPE\\FinishingKScopeOff\\test"+i+".ffn");
+//		for(int i = 0; i < 100; i ++){
+//			testFile = new File("D:\\Larry Projects\\KSCOPE\\FinishingKScopeOff\\test"+i+"abc.ffn");
 //		testFile = new File("testOut5.ffn");
 		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
@@ -494,6 +551,7 @@ public class KDTOnlyMain {
 		inSet = 0;
 		outSet = 0;
 		HashMap<String, Double> correctIDHit = new HashMap<String, Double>();
+		HashMap<String, String> outFastaSequenceMap = new HashMap<String, String>();
 		HashMap<String, Double> allIDHit = new HashMap<String, Double>();
 
 //		PrintWriter pw = new PrintWriter(new File("Threshold.csv"));
@@ -535,8 +593,10 @@ public class KDTOnlyMain {
 					//  total from test file is runs * sequences
 					for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
+						if(sequences % 10000 == 0) System.out.println("Currently testing sequence " + sequences);
 						//  get the kmer vector
 						try{
+							
 							double[] gene = testSequences.get(sequences).kmerVector.clone();
 							double sumGene = 0.0;
 							for(int i2 = 0; i2 < gene.length; i2++){
@@ -570,12 +630,19 @@ public class KDTOnlyMain {
 								if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 //									System.out.println("incrementing positive search");
 									incrementSearchPositive();
-//									if(correctIDHit.containsKey(test.search(coord).toString()) ){
-//										correctIDHit.put(test.search(coord).toString(), correctIDHit.get(test.search(coord).toString()) +1);
+//									outfasta.write(test.nearest(coord).toString() + "\n");
+									String targetSequence = testSequences.get(sequences).sequence;
+									if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
+//									String[] splitSeq =targetSequence.split("(?<=\\G.{70})");
+//									for (String subseq : splitSeq) {
+//										outfasta.write(subseq + "\n");
 //									}
-//									else{
-//										correctIDHit.put(test.search(coord).toString(), 1.0);
-//									}
+									if(correctIDHit.containsKey(test.nearest(coord).toString()) ){
+										correctIDHit.put(test.nearest(coord).toString(), correctIDHit.get(test.nearest(coord).toString()) +1);
+									}
+									else{
+										correctIDHit.put(test.nearest(coord).toString(), 1.0);
+									}
 //									if(allIDHit.containsKey(test.search(coord).toString())){
 //										allIDHit.put(test.search(coord).toString(), allIDHit.get(test.search(coord).toString()) +1);
 //									}
@@ -607,12 +674,20 @@ public class KDTOnlyMain {
 							else if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 								incrementHit();
-//								if(correctIDHit.containsKey(test.search(coord).toString())){
-//									correctIDHit.put(test.search(coord).toString(), correctIDHit.get(test.search(coord).toString()) +1);
+								
+								String targetSequence = testSequences.get(sequences).sequence;
+								if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
+//								outfasta.write(test.nearest(coord).toString() + "\n");
+//								String[] splitSeq =targetSequence.split("(?<=\\G.{70})");
+//								for (String subseq : splitSeq) {
+//									outfasta.write(subseq + "\n");
 //								}
-//								else{
-//									correctIDHit.put(test.search(coord).toString(), 1.0);
-//								}
+								if(correctIDHit.containsKey(test.nearest(coord).toString())){
+									correctIDHit.put(test.nearest(coord).toString(), correctIDHit.get(test.nearest(coord).toString()) +1);
+								}
+								else{
+									correctIDHit.put(test.nearest(coord).toString(), 1.0);
+								}
 							}
 							//  hits something, but not the correct values
 							else if (test.search(coord).equals(testSequences.get(sequences).Cog) == false) {
@@ -636,11 +711,16 @@ public class KDTOnlyMain {
 //									allIDHit.put(test.search(coord).toString(), 1.0);
 //								}
 							}
+							
 						} catch (KeySizeException | ArrayIndexOutOfBoundsException e) {
 							// Array Index Out Of Bounds  is being caused by all the test files being less than 100k sequences in size
 							
 							if(e instanceof ArrayIndexOutOfBoundsException){
 								break;
+							}
+							else if(e instanceof NullPointerException){
+								e.printStackTrace();
+								continue;
 							}
 							else{
 								e.printStackTrace();
@@ -660,7 +740,28 @@ public class KDTOnlyMain {
 		while(!executor.isTerminated()){
 			
 		}
-	
+		
+		
+		double sum = 0;
+		for(double value : correctIDHit.values()){
+			sum += value;
+		}
+		
+		BufferedWriter summaryWriter = new BufferedWriter(new FileWriter("Summary.csv"));
+		summaryWriter.write("Function ID, Percentage Used (in decimal),\n");
+		for(String key : correctIDHit.keySet()){
+			summaryWriter.write(key.replaceAll(",", "")+","+ (correctIDHit.get(key) / sum) +"\n");
+		}
+		summaryWriter.close();
+		
+		for(String key : outFastaSequenceMap.keySet()){
+			outfasta.write(outFastaSequenceMap.get(key) + "\n");
+			String[] splitSeq =key.split("(?<=\\G.{70})");
+			for (String subseq : splitSeq) {
+				outfasta.write(subseq + "\n");
+			}
+		}
+		outfasta.close();
 //		BufferedWriter percentHitWriter = new BufferedWriter(new FileWriter("Percentage Hit.csv"));
 //		percentHitWriter.write("ID hit, percentage hit,\n");
 //		for(String key : correctIDHit.keySet()){
@@ -894,23 +995,23 @@ public class KDTOnlyMain {
 //		sameCogWriterSmall.close();
 //		sameCogWriterMed.close();
 //		nearWriter.close();
-		System.out.println("for test " + i);
+//		System.out.println("for test " + i);
 		System.out.println("Hits: " + getHits());
-		testWriter.write(getHits()+",");
+//		testWriter.write(getHits()+",");
 		System.out.println("Misclassified " + getMisses());
-		testWriter.write(getMisses()+",");
+//		testWriter.write(getMisses()+",");
 		System.out.println("Nothing there" + getNothingThere());
-		testWriter.write(getNothingThere()+",");
+//		testWriter.write(getNothingThere()+",");
 		System.out.println("Search Positive: " + getSearchPositive());
-		testWriter.write(getSearchPositive()+",");
+//		testWriter.write(getSearchPositive()+",");
 		System.out.println("Search Negative: " + getSearchNegative());
-		testWriter.write(getSearchNegative()+",");
+//		testWriter.write(getSearchNegative()+",");
 		System.out.println("in missed set: " + inSet);
-		testWriter.write(inSet+",");
+//		testWriter.write(inSet+",");
 		System.out.println("not in missed set: " + outSet);
-		testWriter.write(outSet+",\n");
-		}
-		testWriter.close();
+//		testWriter.write(outSet+",\n");
+//		}
+//		testWriter.close();
 		// for(String key : lowHitThresholdMap.keySet()){
 		// PrintWriter pw = new PrintWriter(new File("low hit threshold.csv"));
 		// StringBuilder sb = new StringBuilder();
@@ -1369,33 +1470,43 @@ public class KDTOnlyMain {
 		String line = "";
 		int count = 0;
 		while ((line = bufferedReader.readLine()) != null) {
-			if(line.contains("USS-DB")){
-				sequence = bufferedReader.readLine();
-				id = "";
-				sequence = "";
-				continue;
+			if(line.contains(">")){
+				if(first) first = false;
+				else{
+					if(id.contains("USS-DB") || id.contains("hypothetical") || id.contains("Hypothetical")){
+//						sequence = bufferedReader.readLine();
+						id = line;
+						sequence = "";
+						continue;
+					}
+//					id = line;
+//					sequence = bufferedReader.readLine();
+					if(sequence.length() < 100){
+						sequence = "";
+						id = line;
+						continue;
+					}
+					sequence = replaceNucs(sequence);
+					sequence = sequence.substring(60, sequence.length() - 2);
+					
+					storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo), sequence));
+					count++;
+					
+					
+					
+					 if (count>100000) {
+//					if (count > 1000) {
+						break;
+					}
+					id = line;
+					sequence = "";
+				}
+				
 			}
-			id = line;
-			sequence = bufferedReader.readLine();
-			if(sequence.length() < 100){
-				sequence = "";
-				id = "";
-				continue;
-			}
-			sequence = replaceNucs(sequence);
-			sequence = sequence.substring(60, sequence.length() - 2);
-			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
-				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
-				count++;
+			else{
+				sequence+=line;
 			}
 			
-			
-			 if (count>100000) {
-//			if (count > 1000) {
-				break;
-			}
-			id = "";
-			sequence = "";
 		}
 		bufferedReader.close();
 		return storage;

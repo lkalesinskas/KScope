@@ -28,4 +28,10 @@ public class Gene {
 		this.x = x;
 		this.y = y;
 	}
+
+	public Gene(String id, double[] kmers, String sequence2) {
+		Cog = id;
+		kmerVector = kmers;
+		sequence=sequence2;
+	}
 }

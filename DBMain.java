@@ -55,7 +55,7 @@ public class DBMain {
 	static String port = "3306";
 	static String table = "PCA3merTesting";
 
-	public static void main(String[] args) throws ClassNotFoundException, IOException {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile) throws ClassNotFoundException, IOException {
 		kmerToDo =3;
 
 		//  driver manager
