@@ -56,7 +56,7 @@ public class DBMain {
 	static String table = "PCA3merTesting";
 	static String dbname = "FIGFAMS";
 
-	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, boolean train) throws ClassNotFoundException, IOException {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, boolean train, int numthread) throws ClassNotFoundException, IOException {
 		kmerToDo =3;
 
 		//  driver manager
@@ -242,7 +242,7 @@ public class DBMain {
 			HashMap<String, String> outFastaSequenceMap = new HashMap<String, String>();
 			
 			int q = 100;
-			ExecutorService executor = Executors.newFixedThreadPool(10);
+			ExecutorService executor = Executors.newFixedThreadPool(numthread);
 			for(int runs = 0; runs < 100000 / q; runs ++){
 				final int runs3 = runs;
 				Runnable r = new Runnable(){

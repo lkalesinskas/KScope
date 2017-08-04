@@ -18,6 +18,7 @@ public class CommandLineMain {
 		options.addOption("testin", true, "the path and name of the FASTA file that will be parsed and tested against the KDT");
 		options.addOption("out", true, "the path and name of the FASTA file output by the program");
 		options.addOption("traindb", "if you wish to use the training file to train the database.  Do not include this option if your database has already been trained.");
+		options.addOption("numthread", true, "the number of threads you wish to use for this task");
 		options.addOption("help", "print this message");
 		CommandLineParser parser = new DefaultParser();
 		try{
@@ -34,11 +35,13 @@ public class CommandLineMain {
 				String testin = line.getOptionValue("testin");
 				String trainin = line.getOptionValue("trainin");
 				String out = line.getOptionValue("out");
+				int numthread = Integer.parseInt(line.getOptionValue("numthread"));
 				KDTOnlyMain.execute(
 						pca,
 						testin,
 						trainin,
-						out
+						out,
+						numthread
 				);
 			}
 			else if(line.getOptionValue("ram").equals("f")){
@@ -47,12 +50,14 @@ public class CommandLineMain {
 				String trainin = line.getOptionValue("trainin");
 				String out = line.getOptionValue("out");
 				boolean train = line.hasOption("traindb") ? true : false;
+				int numthread = Integer.parseInt(line.getOptionValue("numthread"));
 				DBMain.execute(
 						pca,
 						testin,
 						trainin,
 						out,
-						train
+						train,
+						numthread
 				);
 			}
 		}catch(ParseException e){

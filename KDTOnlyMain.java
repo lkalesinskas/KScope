@@ -45,7 +45,7 @@ public class KDTOnlyMain {
 	static int outSet = 0;
 	double[] gene;
 
-	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile) throws Exception {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, int numthread) throws Exception {
 
 		// kmer size we are using
 		kmerToDo = 3;
@@ -585,7 +585,7 @@ public class KDTOnlyMain {
 
 		int q = 100;
 		//  thread pool.  10 threads seems to cut runtime down to half an hour
-		ExecutorService executor = Executors.newFixedThreadPool(1);
+		ExecutorService executor = Executors.newFixedThreadPool(numthread);
 		for(int runs = 0; runs < 100000 / q; runs ++){
 			final int runs3 = runs;
 			Runnable r = new Runnable(){
