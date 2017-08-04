@@ -60,7 +60,7 @@ public class CommandLineMain {
 						numthread
 				);
 			}
-		}catch(ParseException e){
+		}catch(Exception e){
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("please include all of the following in your command line", options);
 		}

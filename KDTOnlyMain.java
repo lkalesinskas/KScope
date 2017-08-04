@@ -92,6 +92,7 @@ public class KDTOnlyMain {
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String id = "";
 		String sequence = "";
+		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
 		//  coords in KDT as per Larry request
 //		BufferedWriter coordWriter = new BufferedWriter(new FileWriter("In_KDT.csv"));
 //		coordWriter.write("ID,Sequence,");
@@ -156,6 +157,20 @@ public class KDTOnlyMain {
 					}
 					else if(test.search(coord) != null){
 						intersectionCount ++;
+						if(sameMap.containsKey(coord)){
+							HashMap<String, Integer> IDMap = sameMap.get(coord);
+							String targetID = test.search(coord).toString();
+							if(IDMap.containsKey(targetID)){
+								IDMap.put(targetID, IDMap.get(targetID) + 1);
+							}
+							else{
+								IDMap.put(targetID, 1);
+							}
+						}
+						else{
+							sameMap.put(coord, new HashMap<String, Integer>());
+							sameMap.get(coord).put(test.search(coord).toString(), 1);
+						}
 					}
 					count++;
 					sequence = "";
@@ -246,8 +261,25 @@ public class KDTOnlyMain {
 //		coordWriter.close();
 //		intersectWriter.close();
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
-		System.out.println("finished initial tree inserts");
+			System.out.println("finished initial tree inserts");
 			System.gc();
+			System.out.println("beginning secondary tree inserts");
+			BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("test intersects.csv"));
+			for(double[] coords : sameMap.keySet()){
+				HashMap<String, Integer> IDMap = sameMap.get(coords);
+				int max = 1;
+				String maxString = "";
+				for(String key : IDMap.keySet()){
+					if(IDMap.get(key) > max){
+						max = IDMap.get(key);
+						maxString = key;
+					}
+				}
+				if(max > 1 && !maxString.equals("")){
+					test.insert(coords, maxString);
+				}
+			}
+			intersectWriter.close();
 			System.out.println("beginning training data");
 /**   TRAINING DATA START    **/
 			
