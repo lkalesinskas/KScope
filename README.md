@@ -22,3 +22,8 @@ java -jar KScopeJAR.jar -ram t -pca spanPCA -testin testOut6.fasta -trainin trai
 
 
 <h3>-out</h3> the file name for the output file
+
+<h3>-traindb</h3> used when using the Database version only. Will train the database using the train file supplied by the user
+
+
+<h3>-numthread</h3> specify the number of threads the program will use to test data
