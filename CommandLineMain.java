@@ -17,6 +17,7 @@ public class CommandLineMain {
 		options.addOption("trainin", true, "The path and name of the FASTA file that will be used to train the KDT");
 		options.addOption("testin", true, "the path and name of the FASTA file that will be parsed and tested against the KDT");
 		options.addOption("out", true, "the path and name of the FASTA file output by the program");
+		options.addOption("traindb", "if you wish to use the training file to train the database.  Do not include this option if your database has already been trained.");
 		options.addOption("help", "print this message");
 		CommandLineParser parser = new DefaultParser();
 		try{
@@ -45,11 +46,13 @@ public class CommandLineMain {
 				String testin = line.getOptionValue("testin");
 				String trainin = line.getOptionValue("trainin");
 				String out = line.getOptionValue("out");
+				boolean train = line.hasOption("traindb") ? true : false;
 				DBMain.execute(
 						pca,
 						testin,
 						trainin,
-						out
+						out,
+						train
 				);
 			}
 		}catch(ParseException e){

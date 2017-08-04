@@ -58,13 +58,13 @@ public class KDTOnlyMain {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("trainOut6.fasta");
+		File geneFile = new File(TrainFile);
 
 		// Getting sequence		
 		System.out.println("Making KD Tree");
 		//  reading equations
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("spanPCA"));
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(PCAFile));
 		String line = "";
 		int count = 0;
 		
@@ -531,8 +531,8 @@ public class KDTOnlyMain {
 
 		// testing the file of the subset of figs
 		
-		File testFile = new File("testOut6.fasta");
-		BufferedWriter outfasta = new BufferedWriter(new FileWriter("outFasta.fasta"));
+		File testFile = new File(TestFile);
+		BufferedWriter outfasta = new BufferedWriter(new FileWriter(OutFile));
 //		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOutabc.csv"));
 //		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
 //		testWriter.write("\n");
@@ -583,15 +583,15 @@ public class KDTOnlyMain {
 //		pwm.write('\n');
 		int filenum = 0;
 
-		
+		int q = 100;
 		//  thread pool.  10 threads seems to cut runtime down to half an hour
-		ExecutorService executor = Executors.newFixedThreadPool(10);
-		for(int runs = 0; runs < 1000; runs ++){
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		for(int runs = 0; runs < 100000 / q; runs ++){
 			final int runs3 = runs;
 			Runnable r = new Runnable(){
 				public void run(){
 					//  total from test file is runs * sequences
-					for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
+					for(int sequences = runs3*q; sequences < runs3*q + q; sequences ++){
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
 						if(sequences % 10000 == 0) System.out.println("Currently testing sequence " + sequences);
 						//  get the kmer vector

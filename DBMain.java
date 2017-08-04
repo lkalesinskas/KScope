@@ -54,8 +54,9 @@ public class DBMain {
 	static String pswd = "password";
 	static String port = "3306";
 	static String table = "PCA3merTesting";
+	static String dbname = "FIGFAMS";
 
-	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile) throws ClassNotFoundException, IOException {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, boolean train) throws ClassNotFoundException, IOException {
 		kmerToDo =3;
 
 		//  driver manager
@@ -86,7 +87,7 @@ public class DBMain {
 			
 			
 			//  read from equation file
-			BufferedReader eqnReader = new BufferedReader(new FileReader("percentage3merPCA2.txt"));
+			BufferedReader eqnReader = new BufferedReader(new FileReader(PCAFile));
 			List<double[]> equationList = new ArrayList<double[]>();
 			String eqn = "";
 			while((eqn=eqnReader.readLine()) != null){
@@ -110,116 +111,145 @@ public class DBMain {
 			}
 			prepsql+=")";
 			PreparedStatement ps = con2.prepareStatement(prepsql);
-			BufferedReader br = new BufferedReader(new FileReader("TrainOut3.ffn"));
+			BufferedReader br = new BufferedReader(new FileReader(TrainFile));
 //			BufferedWriter distanceWriter = new BufferedWriter(new FileWriter("DistanceToOriginFromTraining.csv"));
 			int count = 0;
 			int uid = 0;
 			String id="";
 			String line = "";
 			String sequence = "";
+			boolean first = true;
 			System.out.println("inputting into db");
 			/**   TRAINING BEGIN   **/
-			while((line = br.readLine()) != null){
-				id = line;
-				// read sequence
-				sequence = br.readLine();
-				sequence = replaceNucs(sequence);
-				//  prepare sql statement
-//				sql = "insert ignore into "+table+" (uid,id,sequence,";
-//				for(int i = 0; i < equationList.size(); i ++){
-//					sql+="z"+i;
-//					if(i + 1 != equationList.size()){
-//						sql +=",";
-//					}
-//				}
-//				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
-				// calculate gene
-				double[] gene = processSequencebyKmer(sequence, kmerToDo);
-				double sumGene = 0.0;
-				for(int i2 = 0; i2 < gene.length; i2++){
-					sumGene+=gene[i2];
-				}
-				for(int i2 = 0; i2 < gene.length; i2++){
-					gene[i2] = gene[i2]/sumGene;
-				}
-				//  calculate the coordinates and the distance to the origin
-				double distance = 0.0;
-				double[] temp = new double[equationList.size()];
-				for(int i = 0; i < equationList.size(); i ++){
-					temp[i] = getPCAX(gene, equationList.get(i));
-					sql += temp[i];
-					distance += temp[i] * temp[i];
-					if(i + 1 != equationList.size()){
-						sql +=",";
+			if(train)
+				while((line = br.readLine()) != null){
+					if(line.contains(">")){
+						if(first){
+							id = line;
+							first = false;
+							continue;
+						}
+						else{
+							if(id.contains("hypothetical") || id.contains("Hypothetical") || id.contains("USS-DB") || sequence.length() < 100){
+								sequence = "";
+								id=line;
+								continue;
+							}
+							id = line;
+							// read sequence
+//							sequence = br.readLine();
+							sequence = replaceNucs(sequence);
+							sequence = sequence.substring(60, sequence.length() - 2);
+							//  prepare sql statement
+			//				sql = "insert ignore into "+table+" (uid,id,sequence,";
+			//				for(int i = 0; i < equationList.size(); i ++){
+			//					sql+="z"+i;
+			//					if(i + 1 != equationList.size()){
+			//						sql +=",";
+			//					}
+			//				}
+			//				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
+							// calculate gene
+							double[] gene = processSequencebyKmer(sequence, kmerToDo);
+							double sumGene = 0.0;
+							for(int i2 = 0; i2 < gene.length; i2++){
+								sumGene+=gene[i2];
+							}
+							for(int i2 = 0; i2 < gene.length; i2++){
+								gene[i2] = gene[i2]/sumGene;
+							}
+							//  calculate the coordinates and the distance to the origin
+							double distance = 0.0;
+							double[] temp = new double[equationList.size()];
+							for(int i = 0; i < equationList.size(); i ++){
+								temp[i] = getPCAX(gene, equationList.get(i));
+								sql += temp[i];
+								distance += temp[i] * temp[i];
+								if(i + 1 != equationList.size()){
+									sql +=",";
+								}
+							}
+							distance = Math.sqrt(distance);
+			//				distanceWriter.write(distance +",\n");
+//							if(count > 3000000) break;
+							double tableName = round(distance,5);
+							String tableString = Double.toString(tableName).replace(".", "");
+							sql = "create table if not exists a" + tableString+" "+
+					                "(uid int not NULL, " +
+									" id TEXT not NULL, "+
+					                " sequence TEXT not NULL,";
+							for(int i = 0; i < equationList.size(); i ++){
+								sql += "z" + i + " double,";
+							}
+							sql += " PRIMARY KEY (uid))";
+							stmt.executeUpdate(sql);
+							sql = "insert ignore into a"+tableString+" (uid,id,sequence,";
+							for(int i = 0; i < equationList.size(); i ++){
+								sql+="z"+i;
+								if(i + 1 != equationList.size()){
+									sql +=",";
+								}
+							}
+							sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
+							for(int i = 0; i < temp.length; i ++){
+								sql+= temp[i];
+								if(i + 1 != equationList.size()){
+									sql +=",";
+								}
+							}
+							sql+=")";
+							//  add to db
+							stmt.executeUpdate(sql);
+							
+							
+							ps.setInt(1, uid);
+							uid++;
+							ps.setString(2, id);
+							ps.setString(3, sequence);
+							for(int i = 0; i < equationList.size(); i ++){
+								int spot = i + 4;
+								ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
+							}
+							// do not uncomment or get rid of prepared statement code.  sql does not seem to work without it.   not sure why
+			//				ps.addBatch();
+							count ++;
+							sequence = "";
+							id = line;
+						}
+						
 					}
-				}
-				distance = Math.sqrt(distance);
-//				distanceWriter.write(distance +",\n");
-				if(count > 3000000) break;
-				double tableName = round(distance,5);
-				String tableString = Double.toString(tableName).replace(".", "");
-				sql = "create table if not exists a" + tableString+" "+
-		                "(uid int not NULL, " +
-						" id TEXT not NULL, "+
-		                " sequence TEXT not NULL,";
-				for(int i = 0; i < equationList.size(); i ++){
-					sql += "z" + i + " double,";
-				}
-				sql += " PRIMARY KEY (uid))";
-				stmt.executeUpdate(sql);
-				sql = "insert ignore into a"+tableString+" (uid,id,sequence,";
-				for(int i = 0; i < equationList.size(); i ++){
-					sql+="z"+i;
-					if(i + 1 != equationList.size()){
-						sql +=",";
+					else{
+						sequence += line;
 					}
+					
 				}
-				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
-				for(int i = 0; i < temp.length; i ++){
-					sql+= temp[i];
-					if(i + 1 != equationList.size()){
-						sql +=",";
-					}
-				}
-				sql+=")";
-				//  add to db
-				stmt.executeUpdate(sql);
-				
-				
-				ps.setInt(1, uid);
-				uid++;
-				ps.setString(2, id);
-				ps.setString(3, sequence);
-				for(int i = 0; i < equationList.size(); i ++){
-					int spot = i + 4;
-					ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
-				}
-				// do not uncomment or get rid of prepared statement code.  sql does not seem to work without it.   not sure why
-//				ps.addBatch();
-				count ++;
-				
-			}
 //			distanceWriter.close();
 			ps.executeBatch();
 			/**    TRAINING END     **/
-			ResultSet size = stmt.executeQuery("select count(*) from pca3mertesting");
+			ResultSet size = stmt.executeQuery("select count(*) from information_schema.tables where table_schema = '"+dbname+"';");
 			while(size.next()){
 				System.out.println("total rows " + size.getInt(1));
 			}
 			/**    BEGIN TESTING    **/
-			File testFile = new File("TestOut3.ffn");
+			File testFile = new File(TestFile);
+			BufferedWriter outfasta = new BufferedWriter(new FileWriter(OutFile));
 			Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 			System.out.println("We have " + testSequences.size() + " test sequences!");
 //			BufferedWriter bw = new BufferedWriter(new FileWriter("nearest100.csv"));
 //			bw.write("IDs at target coord, Nearest IDs with sequence");
+			
+			HashMap<String, Double> correctIDHit = new HashMap<String, Double>();
+			HashMap<String, String> outFastaSequenceMap = new HashMap<String, String>();
+			
+			int q = 100;
 			ExecutorService executor = Executors.newFixedThreadPool(10);
-			for(int runs = 0; runs < 1000; runs ++){
+			for(int runs = 0; runs < 100000 / q; runs ++){
 				final int runs3 = runs;
 				Runnable r = new Runnable(){
 					public void run(){
-						for(int sequences = runs3*100; sequences < runs3*100 + 100; sequences ++){
+						for(int sequences = runs3*q; sequences < runs3*q + q; sequences ++){
 							if(sequences == 0) sequences=2;
-							
+							if(sequences % 10000 == 0) System.out.println("Currently testing sequence " + sequences);
 							//  calculate the correct gene array
 							double[] gene = testSequences.get(sequences).kmerVector.clone();
 							double sumGene = 0.0;
@@ -266,7 +296,19 @@ public class DBMain {
 										String queriedID = rs.getString("id");
 										if(queriedID.equals("") || queriedID.equals(null) || queriedID==null){
 											if(nearest(coord,stmt).equals(testSequences.get(sequences).Cog)){
+												String nearestPoint = nearest(coord,stmt);
+												
 												searchPositive ++;
+												
+												String targetSequence = testSequences.get(sequences).sequence;
+												if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, nearestPoint);
+												
+												if(correctIDHit.containsKey(nearestPoint) ){
+													correctIDHit.put(nearestPoint, correctIDHit.get(nearestPoint) +1);
+												}
+												else{
+													correctIDHit.put(nearestPoint, 1.0);
+												}
 											}
 											else {
 												searchNegative ++;
@@ -274,6 +316,15 @@ public class DBMain {
 										}
 										else if(queriedID.equals(testSequences.get(sequences).Cog)){
 											hit ++;
+											String targetSequence = testSequences.get(sequences).sequence;
+											if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, queriedID);
+											
+											if(correctIDHit.containsKey(queriedID)){
+												correctIDHit.put(queriedID, correctIDHit.get(queriedID) +1);
+											}
+											else{
+												correctIDHit.put(queriedID, 1.0);
+											}
 										}
 										else if(queriedID.equals(testSequences.get(sequences).Cog) == false){
 											miss ++;
@@ -367,6 +418,28 @@ public class DBMain {
 			while(!executor.isTerminated()){
 				
 			}
+			
+			double sum = 0;
+			for(double value : correctIDHit.values()){
+				sum += value;
+			}
+			
+			BufferedWriter summaryWriter = new BufferedWriter(new FileWriter("Summary.csv"));
+			summaryWriter.write("Function ID, Percentage Used (in decimal),\n");
+			for(String key : correctIDHit.keySet()){
+				summaryWriter.write(key.replaceAll(",", "")+","+ (correctIDHit.get(key) / sum) +"\n");
+			}
+			summaryWriter.close();
+			
+			for(String key : outFastaSequenceMap.keySet()){
+				outfasta.write(outFastaSequenceMap.get(key) + "\n");
+				String[] splitSeq =key.split("(?<=\\G.{70})");
+				for (String subseq : splitSeq) {
+					outfasta.write(subseq + "\n");
+				}
+			}
+			outfasta.close();
+			
 //			bw.close();
 			/**   END TESTING   **/
 			System.out.println("Hits: " + hit);
@@ -830,27 +903,39 @@ public class DBMain {
 		String line = "";
 		int count = 0;
 		while ((line = bufferedReader.readLine()) != null) {
-			if(line.contains("USS-DB")){
-				sequence = bufferedReader.readLine();
+			if(line.contains(">")){
+				if(first) first = false;
+				if(id.contains("USS-DB") || id.contains("hypothetical") || id.contains("Hypothetical")){
+//					sequence = bufferedReader.readLine();
+					id = line;
+					sequence = "";
+					continue;
+				}
+//				id = line;
+				if(sequence.length() < 100){
+					sequence = "";
+					id = line;
+					continue;
+				}
+//				sequence = bufferedReader.readLine();
+				sequence = replaceNucs(sequence);
+				sequence = sequence.substring(60, sequence.length() - 2);
+
+				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo), sequence));
+				count++;
+				
+				
+				
+				 if (count>100000) {
+	//			if (count > 1000) {
+					break;
+				}
 				id = "";
 				sequence = "";
-				continue;
 			}
-			id = line;
-			sequence = bufferedReader.readLine();
-			sequence = replaceNucs(sequence);
-			if(!id.contains("hypothetical") || !id.contains("Hypothetical")){
-				storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo)));
-				count++;
+			else{
+				sequence += line;
 			}
-			
-			
-			 if (count>100000) {
-//			if (count > 1000) {
-				break;
-			}
-			id = "";
-			sequence = "";
 		}
 		bufferedReader.close();
 		return storage;
