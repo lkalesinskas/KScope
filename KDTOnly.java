@@ -45,7 +45,7 @@ public class KDTOnly {
 	static int outSet = 0;
 	double[] gene;
 
-	public static void main(String[] args) throws Exception {
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, int numthread) throws Exception {
 
 		// kmer size we are using
 		kmerToDo = 3;
@@ -58,13 +58,13 @@ public class KDTOnly {
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 
 		// this is the training data for the models
-		File geneFile = new File("trainOut5.ffn");
+		File geneFile = new File(TrainFile);
 
 		// Getting sequence		
 		System.out.println("Making KD Tree");
 		//  reading equations
 		System.out.println("Reading Equations");
-		BufferedReader bufferedReader = new BufferedReader(new FileReader("spanPCA"));
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(PCAFile));
 		String line = "";
 		int count = 0;
 		
@@ -82,81 +82,116 @@ public class KDTOnly {
 		int intersectionCount = 0;
 		HashMap<String, List<double[]>> clusterMap = new HashMap<String, List<double[]>>();
 		System.out.println("Correlating");
+		boolean first = true;
 		
 		//  reading from the train file
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String id = "";
 		String sequence = "";
+		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
 		/**  the writers for train and test out that will be used for the spanning set   **/
 //		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("trainOut5.ffn"));
 //		BufferedWriter testWriter = new BufferedWriter(new FileWriter("testOut5.ffn"));
+		
 		while( (line = br.readLine()) != null){
 
-/**   INSERTING INTO TREE OR STORAGE VECTOR    **/
-			if(line.contains("USS-DB")){
-				sequence = br.readLine();
-				id = "";
-				sequence = "";
-				continue;
-			}
-			
-			id = line;
-			sequence = br.readLine();
-			
-			//  filter out undesirable genes
-			if(line.contains("USS-DB") || sequence.equals("") || sequence.length() < 100){
-				id="";
-				sequence="";
-				continue;
-			}
-			sequence = replaceNucs(sequence);
-			sequence = sequence.substring(60, sequence.length() - 2);
-			double[] gene = processSequencebyKmer(sequence, kmerToDo);
-			double sumGene = 0.0;
-			for(int i2 = 0; i2 < gene.length; i2++){
-				sumGene+=gene[i2];
-			}
-			for(int i2 = 0; i2 < gene.length; i2++){
-				gene[i2] = gene[i2]/sumGene;
-			}
-			Double[] coordArr = new Double[equationList.size()];
-			
-			for(int v = 0; v < equationList.size(); v ++){
-				coordArr[v] = getPCAX(gene, equationList.get(v));
-			}
-			
-			
-			
-			Double[] coord1 = coordArr;
-			double[] coord = new double[coord1.length];
-			for(int c = 0; c < coord1.length; c ++){
-				coord[c] = coord1[c];
-			}
-			if (!id.contains("hypothetical") || !id.contains("Hypothetical") || !line.contains("USS-DB")) {
-				
-				for(int v = 0; v < equationList.size(); v ++){
-					coordArr[v] = getPCAX(gene, equationList.get(v));
-				}
-				
-				/**   if a search at the coord yields nothing  **/
-				if(test.search(coord) == null){
-					test.insert(coord, id);
-					/**  put into training data    **/
-//					trainWriter.write(id+"\n");
-//					trainWriter.write(sequence+"\n");
-				}
-				else if(test.search(coord) != null){
-					intersectionCount ++;
-					/**   if intersection then write to the test file that will be broken up into smaller 100k files later   **/
-//					testWriter.write(id+"\n");
-//					testWriter.write(sequence+"\n");
-				}
-				count++;
-			}
-		}
+			/**   INSERTING INTO TREE OR STORAGE VECTOR    **/
+			//  if it is the first line
+						if(line.contains(">")){
+							if(first){
+								id = line;
+								first = false;
+								continue;
+							}
+							else{
+								//  filter out unwanted sequences
+								if(id.contains("hypothetical") || id.contains("Hypothetical") || id.contains("USS-DB") || sequence.length() < 100){
+									sequence = "";
+									id=line;
+									continue;
+								}
+								
+								// 
+								sequence = replaceNucs(sequence);
+								sequence = sequence.substring(60, sequence.length() - 2);
+								double[] gene = processSequencebyKmer(sequence, kmerToDo);
+								double sumGene = 0.0;
+								for(int i2 = 0; i2 < gene.length; i2++){
+									sumGene+=gene[i2];
+								}
+								for(int i2 = 0; i2 < gene.length; i2++){
+									gene[i2] = gene[i2]/sumGene;
+								}
+								
+								Double[] coordArr = new Double[equationList.size()];
+								
+								for(int v = 0; v < equationList.size(); v ++){
+									coordArr[v] = getPCAX(gene, equationList.get(v));
+								}
+								
+								
+								
+								Double[] coord1 = coordArr;
+								double[] coord = new double[coord1.length];
+								for(int c = 0; c < coord1.length; c ++){
+									coord[c] = coord1[c];
+								}
+								
+								
+								for(int v = 0; v < equationList.size(); v ++){
+									coordArr[v] = getPCAX(gene, equationList.get(v));
+								}
+								/**   if a search at the coord yields nothing  **/
+								if(test.search(coord) == null){
+									test.insert(coord, id);
+								}
+								else if(test.search(coord) != null){
+									intersectionCount ++;
+									if(sameMap.containsKey(coord)){
+										HashMap<String, Integer> IDMap = sameMap.get(coord);
+										String targetID = test.search(coord).toString();
+										if(IDMap.containsKey(targetID)){
+											IDMap.put(targetID, IDMap.get(targetID) + 1);
+										}
+										else{
+											IDMap.put(targetID, 1);
+										}
+									}
+									else{
+										sameMap.put(coord, new HashMap<String, Integer>());
+										sameMap.get(coord).put(test.search(coord).toString(), 1);
+									}
+								}
+								count++;
+								sequence = "";
+								id = line;
+							}
+						}
+						else{
+							sequence += line;
+						}
+					}
+
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
 		System.out.println("finished initial tree inserts");
 			System.gc();
+			System.out.println("beginning secondary tree inserts");
+			BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("test intersects.csv"));
+			for(double[] coords : sameMap.keySet()){
+				HashMap<String, Integer> IDMap = sameMap.get(coords);
+				int max = 1;
+				String maxString = "";
+				for(String key : IDMap.keySet()){
+					if(IDMap.get(key) > max){
+						max = IDMap.get(key);
+						maxString = key;
+					}
+				}
+				if(max > 1 && !maxString.equals("")){
+					test.insert(coords, maxString);
+				}
+			}
+			intersectWriter.close();
 			System.out.println("beginning training data");
 /**   TRAINING DATA START    **/
 			
@@ -167,7 +202,7 @@ public class KDTOnly {
 		System.out.println("actual intersection count " + intersectionCount);
 		
 		// testing the file of the subset of figs
-		File testFile = new File("testOut5.ffn");
+		File testFile = new File(TestFile);
 		BufferedWriter testWriter = new BufferedWriter(new FileWriter("100ktestOut.csv"));
 		testWriter.write("Hits,Misclassified,Nothing there,Search Positive, Search Negative, in missed set, not in missed set,");
 		testWriter.write("\n");
