@@ -56,6 +56,9 @@ public class KDTOnlyMain {
 		File genome3 = new File("Genomes\\GCF_000160075.2_ASM16007v2_genomic.fna");
 		File genome4 = new File("Genomes\\GCF_000376245.1_ASM37624v1_genomic.fna");
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
+		HashMap<String, TrainFile> trainerMap = new HashMap<String, TrainFile>();
+		trainerMap.put("feature", new TrainFeature());
+		trainerMap.put("fasta", new TrainFasta());
 
 		// this is the training data for the models
 		File geneFile = new File(TrainFile);
@@ -84,116 +87,19 @@ public class KDTOnlyMain {
 		System.out.println("Correlating");
 		boolean first = true;
 		
-		BufferedReader br = new BufferedReader(new FileReader(geneFile));
-		String id = "";
-		String sequence = "";
-		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
-		/**  the writers for train and test out that will be used for the spanning set   **/
-		while( (line = br.readLine()) != null){
-
-/**   INSERTING INTO TREE OR STORAGE VECTOR    **/
-			//  dealing with the first line
-			if(line.contains(">")){
-				if(first){
-					id = line;
-					first = false;
-					continue;
-				}
-				else{
-					//  filtering unwanted sequences
-					if(id.contains("hypothetical") || id.contains("Hypothetical") || id.contains("USS-DB") || sequence.length() < 100){
-						sequence = "";
-						id=line;
-						continue;
-					}
-					// fix sequence to have replaced length and unwanted parts removed
-					sequence = replaceNucs(sequence);
-					sequence = sequence.substring(60, sequence.length() - 2);
-					double[] gene = processSequencebyKmer(sequence, kmerToDo);
-					double sumGene = 0.0;
-					for(int i2 = 0; i2 < gene.length; i2++){
-						sumGene+=gene[i2];
-					}
-					for(int i2 = 0; i2 < gene.length; i2++){
-						gene[i2] = gene[i2]/sumGene;
-					}
-					
-					Double[] coordArr = new Double[equationList.size()];
-					//  get the coordinates for each point
-					for(int v = 0; v < equationList.size(); v ++){
-						coordArr[v] = getPCAX(gene, equationList.get(v));
-					}
-					
-					
-					//  convert the coords calculated into legacy code
-					Double[] coord1 = coordArr;
-					double[] coord = new double[coord1.length];
-					for(int c = 0; c < coord1.length; c ++){
-						coord[c] = coord1[c];
-					}
-					
-					
-					for(int v = 0; v < equationList.size(); v ++){
-						coordArr[v] = getPCAX(gene, equationList.get(v));
-					}
-					/**   if a search at the coord yields nothing  **/
-					if(test.search(coord) == null){
-						test.insert(coord, id);
-					}
-					//  if an intersection then insert into sameMap for later possible reinsertion
-					else if(test.search(coord) != null){
-						intersectionCount ++;
-						//  sameMap will be for when there might be points that are at the same point and might have multiple of the same thing at the same point
-						//  will later make what is most popular at the point what is in the tree
-						if(sameMap.containsKey(coord)){
-							HashMap<String, Integer> IDMap = sameMap.get(coord);
-							String targetID = test.search(coord).toString();
-							if(IDMap.containsKey(targetID)){
-								IDMap.put(targetID, IDMap.get(targetID) + 1);
-							}
-							else{
-								IDMap.put(targetID, 1);
-							}
-						}
-						else{
-							sameMap.put(coord, new HashMap<String, Integer>());
-							sameMap.get(coord).put(test.search(coord).toString(), 1);
-						}
-					}
-					count++;
-					sequence = "";
-					id = line;
-				}
-
-			}
-			else{
-				sequence += line;
-			}
-		}
-
-/**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
-			System.out.println("finished initial tree inserts");
-			System.gc();
-			System.out.println("beginning secondary tree inserts");
-			BufferedWriter intersectWriter = new BufferedWriter(new FileWriter("test intersects.csv"));
-			
-			//  go through sameMap and make the most popular part of the tree.  eliminate less popular
-			for(double[] coords : sameMap.keySet()){
-				HashMap<String, Integer> IDMap = sameMap.get(coords);
-				int max = 1;
-				String maxString = "";
-				for(String key : IDMap.keySet()){
-					if(IDMap.get(key) > max){
-						max = IDMap.get(key);
-						maxString = key;
-					}
-				}
-				if(max > 1 && !maxString.equals("")){
-					test.insert(coords, maxString);
-				}
-			}
-			intersectWriter.close();
+		
 /**   TRAINING DATA START    **/
+		BufferedReader br = new BufferedReader(new FileReader(geneFile));
+		String extension = "";
+
+		int i = TrainFile.lastIndexOf('.');
+		int p = Math.max(TrainFile.lastIndexOf('/'), TrainFile.lastIndexOf('\\'));
+
+		if (i > p) {
+		    extension = TrainFile.substring(i+1);
+		}
+		TrainFile trainer = trainerMap.get(extension);
+		trainer.train(test, intersectionCount, br, equationList, kmerToDo);
 			
 /**   TRAINING DATA END    **/
 		System.out.println("training data finished");
@@ -459,7 +365,7 @@ public class KDTOnlyMain {
 //						- 0.023 * kmer[11] - 0.023 * kmer[1] + 0.005 * kmer[4] + 0.005 * kmer[14];
 	}
 
-	private static double getPCAX(double[] kmer, double[] pcaArr) {
+	protected static double getPCAX(double[] kmer, double[] pcaArr) {
 		// -0.278kmer15-0.278kmer5-0.278kmer3-0.278kmer8-0.278kmer12-0.278kmer2-0.276kmer9-0.276kmer14-0.238kmer6-0.238kmer11-0.235kmer4-0.224kmer10-0.211kmer1-0.211kmer16-0.201kmer7-0.191kmer13
 		
 		double retval = 0.0;

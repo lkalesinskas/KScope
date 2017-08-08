@@ -82,8 +82,6 @@ public class DBMain {
 	                "(uid int not NULL, " +
 					" id TEXT not NULL, "+
 	                " sequence TEXT not NULL,";
-//	                " PRIMARY KEY ( id ))"; 
-//			stmt.executeUpdate(sql);
 			
 			
 			//  read from equation file
@@ -112,7 +110,6 @@ public class DBMain {
 			prepsql+=")";
 			PreparedStatement ps = con2.prepareStatement(prepsql);
 			BufferedReader br = new BufferedReader(new FileReader(TrainFile));
-//			BufferedWriter distanceWriter = new BufferedWriter(new FileWriter("DistanceToOriginFromTraining.csv"));
 			int count = 0;
 			int uid = 0;
 			String id="";
@@ -137,19 +134,9 @@ public class DBMain {
 							}
 							id = line;
 							// read sequence
-//							sequence = br.readLine();
 							sequence = replaceNucs(sequence);
 							sequence = sequence.substring(60, sequence.length() - 2);
 							//  prepare sql statement
-			//				sql = "insert ignore into "+table+" (uid,id,sequence,";
-			//				for(int i = 0; i < equationList.size(); i ++){
-			//					sql+="z"+i;
-			//					if(i + 1 != equationList.size()){
-			//						sql +=",";
-			//					}
-			//				}
-			//				sql+=") values ("+uid +",'"+id+"','"+sequence+"',";
-							// calculate gene
 							double[] gene = processSequencebyKmer(sequence, kmerToDo);
 							double sumGene = 0.0;
 							for(int i2 = 0; i2 < gene.length; i2++){
@@ -170,8 +157,6 @@ public class DBMain {
 								}
 							}
 							distance = Math.sqrt(distance);
-			//				distanceWriter.write(distance +",\n");
-//							if(count > 3000000) break;
 							double tableName = round(distance,5);
 							String tableString = Double.toString(tableName).replace(".", "");
 							sql = "create table if not exists a" + tableString+" "+
@@ -211,7 +196,6 @@ public class DBMain {
 								ps.setDouble(spot, getPCAX(gene, equationList.get(i)));
 							}
 							// do not uncomment or get rid of prepared statement code.  sql does not seem to work without it.   not sure why
-			//				ps.addBatch();
 							count ++;
 							sequence = "";
 							id = line;
@@ -235,8 +219,6 @@ public class DBMain {
 			BufferedWriter outfasta = new BufferedWriter(new FileWriter(OutFile));
 			Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
 			System.out.println("We have " + testSequences.size() + " test sequences!");
-//			BufferedWriter bw = new BufferedWriter(new FileWriter("nearest100.csv"));
-//			bw.write("IDs at target coord, Nearest IDs with sequence");
 			
 			HashMap<String, Double> correctIDHit = new HashMap<String, Double>();
 			HashMap<String, String> outFastaSequenceMap = new HashMap<String, String>();

@@ -19,6 +19,7 @@ public class CommandLineMain {
 		options.addOption("out", true, "the path and name of the FASTA file output by the program");
 		options.addOption("traindb", "if you wish to use the training file to train the database.  Do not include this option if your database has already been trained.");
 		options.addOption("numthread", true, "the number of threads you wish to use for this task");
+		options.addOption("fastatofeature", true, "if you wish to turn a FASTA file into a FEATURE file.  You will then need to rerun the program with your new FEATURE file. <arg> must be your FASTA file");
 		options.addOption("help", "print this message");
 		CommandLineParser parser = new DefaultParser();
 		try{
@@ -30,7 +31,12 @@ public class CommandLineMain {
 				System.exit(1);
 			}
 			
-			if(line.getOptionValue("ram").equals("t")){
+			else if(line.hasOption("fastatofeature")){
+				FastaToFeatureFile.fastaToFeature(line.getOptionValue("fastatofeature"), line.getOptionValue("pca"));
+				System.exit(2);
+			}
+			
+			else if(line.getOptionValue("ram").equals("t")){
 				String pca = line.getOptionValue("pca");
 				String testin = line.getOptionValue("testin");
 				String trainin = line.getOptionValue("trainin");
