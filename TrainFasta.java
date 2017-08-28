@@ -1,20 +1,34 @@
 package KScope;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.List;
 
 import edu.wlu.cs.levy.CG.KDTree;
 
-public class TrainFasta implements TrainFile {
+public class TrainFasta {
+	
+	private int intersectionCount;
 
-	public void train(KDTree test, int intersectionCount, BufferedReader br, List<double[]> equationList, int kmerToDo) throws Exception{
+	public int getIntersectionCount(){
+		return this.intersectionCount;
+	}
+
+	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo, boolean fastatofeature, String TrainFile) throws Exception{
 		String line = "";
 		String id = "";
 		String sequence = "";
 		boolean first = true;
 		int count = 0;
+		intersectionCount = 0;
 		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
+		BufferedWriter bw = new BufferedWriter(new FileWriter(TrainFile+".feature"));
+		if(fastatofeature) System.out.println("converting to feature file");
+//		BufferedWriter trainWriter = new BufferedWriter(new FileWriter("TrainOut93merecoli.fasta"));
+//		BufferedWriter testWriter = new BufferedWriter(new FileWriter("TestOut93merecoli.fasta"));
+		
 		/**  the writers for train and test out that will be used for the spanning set   **/
 		while( (line = br.readLine()) != null){
 
@@ -35,6 +49,7 @@ public class TrainFasta implements TrainFile {
 					}
 					// fix sequence to have replaced length and unwanted parts removed
 					sequence = KDTOnlyMain.replaceNucs(sequence);
+					String origSequence = sequence;
 					sequence = sequence.substring(60, sequence.length() - 2);
 					double[] gene = KDTOnlyMain.processSequencebyKmer(sequence, kmerToDo);
 					double sumGene = 0.0;
@@ -57,19 +72,40 @@ public class TrainFasta implements TrainFile {
 					double[] coord = new double[coord1.length];
 					for(int c = 0; c < coord1.length; c ++){
 						coord[c] = coord1[c];
+						if(fastatofeature){
+							bw.write(coord1[c].toString());
+							if(c + 1 != coord1.length){
+								bw.write(",");
+							}
+						}
+					}
+					if(fastatofeature){
+						bw.write("~~"+id+"\n");
 					}
 					
-					
-					for(int v = 0; v < equationList.size(); v ++){
-						coordArr[v] = KDTOnlyMain.getPCAX(gene, equationList.get(v));
-					}
+//					sequenceMap.put(coord, origSequence);
+//					for(int v = 0; v < equationList.size(); v ++){
+//						coordArr[v] = KDTOnlyMain.getPCAX(gene, equationList.get(v));
+//					}
 					/**   if a search at the coord yields nothing  **/
 					if(test.search(coord) == null){
 						test.insert(coord, id);
+//						trainWriter.write(id+"\n");
+//						String[] splitSeq = origSequence.split("(?<=\\G.{70})");
+//						for(String str : splitSeq){
+//							trainWriter.write(str+"\n");
+//						}
 					}
 					//  if an intersection then insert into sameMap for later possible reinsertion
 					else if(test.search(coord) != null){
 						intersectionCount ++;
+						
+//						testWriter.write(id+"\n");
+//						String[] splitSeq = origSequence.split("(?<=\\G.{70})");
+//						for(String str : splitSeq){
+//							testWriter.write(str+"\n");
+//						}
+						
 						//  sameMap will be for when there might be points that are at the same point and might have multiple of the same thing at the same point
 						//  will later make what is most popular at the point what is in the tree
 						if(sameMap.containsKey(coord)){
@@ -97,6 +133,11 @@ public class TrainFasta implements TrainFile {
 				sequence += line;
 			}
 		}
+		
+//		testWriter.close();
+//		trainWriter.close();
+		bw.close();
+		if(fastatofeature) System.out.println("done converting");
 
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
 			System.out.println("finished initial tree inserts");

@@ -27,3 +27,9 @@ java -jar KScopeJAR.jar -ram t -pca spanPCA -testin testOut6.fasta -trainin trai
 
 
 <h3>-numthread</h3> specify the number of threads the program will use to test data.  In the example above, 10 threads are being used
+
+<h3>-fastatofeature</h3> turns a FASTA file into a FEATURE file
+
+<h3>-kmer</h3> the kmer count you wish to use
+
+<h3>-help</h3> display this message

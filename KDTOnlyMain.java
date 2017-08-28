@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +36,6 @@ public class KDTOnlyMain {
 	public static int kmerMax = 9;
 	public static int numShifts = 0;
 	public static int numShiftsMinus = 0;
-	public static int kmerToDo = 0;
 	protected static int miss = 0;
 	protected static int hit = 0;
 	protected static int nothingThere = 0;
@@ -45,11 +45,8 @@ public class KDTOnlyMain {
 	static int outSet = 0;
 	double[] gene;
 
-	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, int numthread) throws Exception {
-
-		// kmer size we are using
-		kmerToDo = 3;
-
+	@SuppressWarnings("static-access")
+	public static void execute(String PCAFile, String TestFile, String TrainFile, String OutFile, int numthread, int kmer, boolean fastatofeature) throws Exception {
 		// Files for Axis
 		File genome1 = new File("Genomes\\Genome1.fna");
 		File genome2 = new File("Genomes\\Genome2.fna");
@@ -57,8 +54,8 @@ public class KDTOnlyMain {
 		File genome4 = new File("Genomes\\GCF_000376245.1_ASM37624v1_genomic.fna");
 		File genome5 = new File("Genomes\\GCF_000018105.1_ASM1810v1_genomic.fna");
 		HashMap<String, TrainFile> trainerMap = new HashMap<String, TrainFile>();
-		trainerMap.put("feature", new TrainFeature());
-		trainerMap.put("fasta", new TrainFasta());
+//		trainerMap.put("feature", new TrainFeature());
+//		trainerMap.put("fasta", new TrainFasta());
 
 		// this is the training data for the models
 		File geneFile = new File(TrainFile);
@@ -82,25 +79,36 @@ public class KDTOnlyMain {
 		KDTree test = new KDTree(equationList.size());
 		HashMap<String, Integer> pegSet = new HashMap<String, Integer>();
 		
-		int intersectionCount = 0;
 		HashMap<String, List<double[]>> clusterMap = new HashMap<String, List<double[]>>();
 		System.out.println("Correlating");
 		boolean first = true;
 		
-		
+//		HashMap<double[], String> trainSequenceMap = new HashMap<double[], String>();
 /**   TRAINING DATA START    **/
 		BufferedReader br = new BufferedReader(new FileReader(geneFile));
 		String extension = "";
-
+		long start = System.nanoTime();
 		int i = TrainFile.lastIndexOf('.');
 		int p = Math.max(TrainFile.lastIndexOf('/'), TrainFile.lastIndexOf('\\'));
 
 		if (i > p) {
 		    extension = TrainFile.substring(i+1);
 		}
-		TrainFile trainer = trainerMap.get(extension);
-		trainer.train(test, intersectionCount, br, equationList, kmerToDo);
-			
+		int intersectionCount = 0;
+		if(extension.equals("fasta")){
+			TrainFasta trainer = new TrainFasta();
+			trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
+			intersectionCount = trainer.getIntersectionCount();
+		}
+		else if(extension.equals("feature")){
+			TrainFeature trainer = new TrainFeature();
+			trainer.train(test, br, equationList, kmer);
+			intersectionCount = trainer.getIntersectionCount();
+		}
+		if(fastatofeature) System.exit(1);
+		long end = System.nanoTime();
+		System.out.println("total train time: " + (end - start));
+//			trainSequenceMap = trainer.sequenceMap;
 /**   TRAINING DATA END    **/
 		System.out.println("training data finished");
 		System.out.println("KDTree size " + test.size());
@@ -108,7 +116,7 @@ public class KDTOnlyMain {
 		
 		File testFile = new File(TestFile);
 		BufferedWriter outfasta = new BufferedWriter(new FileWriter(OutFile));
-		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile);
+		Vector<Gene> testSequences = InputAndProcessGenesCategoryTest(testFile, kmer);
 		System.out.println("We have " + testSequences.size() + " test sequences!");
 		miss = 0;
 		hit = 0;
@@ -119,13 +127,30 @@ public class KDTOnlyMain {
 		outSet = 0;
 		HashMap<String, Double> correctIDHit = new HashMap<String, Double>();
 		HashMap<String, String> outFastaSequenceMap = new HashMap<String, String>();
-		HashMap<String, Double> allIDHit = new HashMap<String, Double>();
-
-		int filenum = 0;
-
+//		HashMap<String, Double> allIDHit = new HashMap<String, Double>();
+		
+		//  for testing across multiple nmers
+//		BufferedWriter nmerWriter = new BufferedWriter(new FileWriter("random test vs 4mer.csv"));
+//		ArrayList<String> kdthit = new ArrayList<String>();
+//		ArrayList<String> trainhit = new ArrayList<String>();
+//		for(int i2 = 0; i2 < 100005; i2 ++){
+//			kdthit.add("");
+//			trainhit.add("");
+//		}
+		
+//		RandomAccessFile trainReader = new RandomAccessFile(new File("TrainOut82mer.fasta"), "r");
+//		ArrayList<String> trainArray = new ArrayList<String>();
+//		BufferedWriter actualWriter = new BufferedWriter(new FileWriter("Train 3mer miss.fasta"));
+//		BufferedWriter missWriter = new BufferedWriter(new FileWriter("Test 3mer miss.fasta"));
+		HashMap<String, ArrayList<String>> classMap = new HashMap<String, ArrayList<String>>();
+		HashMap<String, HashMap<String, Integer>> classificationMap = new HashMap<String, HashMap<String, Integer>>();
+		BufferedWriter classificationWriter = new BufferedWriter(new FileWriter("classification 2mer ecoli.csv"));
+//		int filenum = 0;
+		long testStart = System.nanoTime();
 		int q = 100;
 		//  thread pool.
 		ExecutorService executor = Executors.newFixedThreadPool(numthread);
+//		for(int sequences = 0; sequences < testSequences.size(); sequences ++){
 		for(int runs = 0; runs < 100000 / q; runs ++){
 			final int runs3 = runs;
 			Runnable r = new Runnable(){
@@ -134,6 +159,7 @@ public class KDTOnlyMain {
 					for(int sequences = runs3*q; sequences < runs3*q + q; sequences ++){
 						if(sequences == 0) sequences = 2;  //  error happens if sequences = 0 or 1
 						if(sequences % 10000 == 0) System.out.println("Currently testing sequence " + sequences);
+//						trainhit.add(sequences, testSequences.get(sequences).Cog);
 						//  get the kmer vector
 						try{
 							
@@ -169,6 +195,23 @@ public class KDTOnlyMain {
 								// otherwise we are wrong
 								if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 									incrementSearchPositive();
+									// for ecoli classification
+//									if(classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//										HashMap<String, Integer> valueMap = classificationMap.get(testSequences.get(sequences).Cog);
+//										if(valueMap.containsKey(test.nearest(coord).toString())){
+//											valueMap.put(test.nearest(coord).toString(), valueMap.get(test.nearest(coord).toString()) + 1);
+//											classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//										}
+//										else if(!valueMap.containsKey(test.nearest(coord).toString())){
+//											valueMap.put(test.nearest(coord).toString(), 1);
+//											classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//										}
+//									}else if(!classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//										HashMap<String, Integer> valueMap = new HashMap<String, Integer>();
+//										valueMap.put(test.nearest(coord).toString(), 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
+//									kdthit.add(sequences, test.nearest(coord).toString());
 									String targetSequence = testSequences.get(sequences).sequence;
 									//  input the sequence for the out file and summary file
 									if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
@@ -188,29 +231,137 @@ public class KDTOnlyMain {
 										outSet ++;
 									}
 									incrementSearchNegative();
-									
-									
+//									kdthit.add(sequences, test.nearest(coord).toString());
+									//  for ecoli classification
+//									if(classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//										HashMap<String, Integer> valueMap = classificationMap.get(testSequences.get(sequences).Cog);
+//										if(valueMap.containsKey(test.nearest(coord).toString())){
+//											valueMap.put(test.nearest(coord).toString(), valueMap.get(test.nearest(coord).toString()) + 1);
+//											classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//										}
+//										else if(!valueMap.containsKey(test.nearest(coord).toString())){
+//											valueMap.put(test.nearest(coord).toString(), 1);
+//											classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//										}
+//									}else if(!classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//										HashMap<String, Integer> valueMap = new HashMap<String, Integer>();
+//										valueMap.put(test.nearest(coord).toString(), 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
 								}
 							}
 							// if we search and land on top of another coordinate
 							else if (test.nearest(coord).toString().equals(testSequences.get(sequences).Cog)) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 								incrementHit();
-								
+								//  for ecoli classification
+//								if(classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//									HashMap<String, Integer> valueMap = classificationMap.get(testSequences.get(sequences).Cog);
+//									if(valueMap.containsKey(test.nearest(coord).toString())){
+//										valueMap.put(test.nearest(coord).toString(), valueMap.get(test.nearest(coord).toString()) + 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
+//									else if(!valueMap.containsKey(test.nearest(coord).toString())){
+//										valueMap.put(test.nearest(coord).toString(), 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
+//								}else if(!classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//									HashMap<String, Integer> valueMap = new HashMap<String, Integer>();
+//									valueMap.put(test.nearest(coord).toString(), 1);
+//									classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//								}
+//								kdthit.add(sequences, test.nearest(coord).toString());
 								String targetSequence = testSequences.get(sequences).sequence;
 							//  input the sequence for the out file and summary file
 								if(!outFastaSequenceMap.containsKey(targetSequence)) outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
 								if(correctIDHit.containsKey(test.nearest(coord).toString())){
-									correctIDHit.put(test.nearest(coord).toString(), correctIDHit.get(test.nearest(coord).toString()) +1);
+									String target = test.nearest(coord).toString();
+									correctIDHit.put(target, correctIDHit.get(target) +1);
 								}
 								else{
 									correctIDHit.put(test.nearest(coord).toString(), 1.0);
 								}
 							}
 							//  hits something, but not the correct values
-							else if (test.search(coord).equals(testSequences.get(sequences).Cog) == false) {
+							else if (test.search(coord).toString().equals(testSequences.get(sequences).Cog) == false) {
 								/**   skipped a lot of commented code.  please refer to below for missing commented out code   **/
 								incrementMiss();
+								//  for ecoli classification
+//								if(classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//									HashMap<String, Integer> valueMap = classificationMap.get(testSequences.get(sequences).Cog);
+//									if(valueMap.containsKey(test.nearest(coord).toString())){
+//										valueMap.put(test.nearest(coord).toString(), valueMap.get(test.nearest(coord).toString()) + 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
+//									else if(!valueMap.containsKey(test.nearest(coord).toString())){
+//										valueMap.put(test.nearest(coord).toString(), 1);
+//										classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//									}
+//								}else if(!classificationMap.containsKey(testSequences.get(sequences).Cog)){
+//									HashMap<String, Integer> valueMap = new HashMap<String, Integer>();
+//									valueMap.put(test.nearest(coord).toString(), 1);
+//									classificationMap.put(testSequences.get(sequences).Cog, valueMap);
+//								}
+//								String line2 = "";
+//								String id = "";
+//								String targetID = test.search(coord).toString();
+//								trainArray.add(targetID);
+//								System.out.println(test.search(coord).toString());
+//								String trainID = testSequences.get(sequences).Cog;
+//								String sequence = "";
+								
+//								while((line2 = trainReader.readLine()) != null){
+//									if(line2.equals(targetID)){
+////										System.out.println("I am found");
+//										while(!(line2 = trainReader.readLine()).contains(">")){
+//											sequence += line2;
+//											if(line2.contains(">")) break;
+//										}
+//										actualWriter.write(targetID + "\n");
+//										String[] splitSeq = sequence.split("(?<=\\G.{70})");
+//										for(String str : splitSeq){
+//											actualWriter.write(str+"\n");
+//										}
+//										trainReader.seek(0);
+//										break;
+//									}
+//								}
+								
+//								missWriter.write(testSequences.get(sequences).Cog +"\n");
+//								sequence = testSequences.get(sequences).sequence;
+//								String[] splitSeq = sequence.split("(?<=\\G.{70})");
+//								for(String str : splitSeq){
+//									missWriter.write(str+"\n");
+//								}
+								
+//								actualWriter.write(test.search(coord).toString() +"\n");
+//								for(double[] key : trainSequenceMap.keySet()){
+//									if(Arrays.equals(coord, key)){
+//										String trainSequence = trainSequenceMap.get(key);
+//										String[] splitSeq1 = trainSequence.split("(?<=\\G.{70})");
+//										
+//										for(String str : splitSeq1){
+//											actualWriter.write(str+"\n");
+//										}
+//										break;
+//									}
+//								}
+//								String trainSequence = trainSequenceMap.get(coord);
+//							
+//								String[] splitSeq1 = trainSequence.split("(?<=\\G.{70})");
+//								
+//								for(String str : splitSeq1){
+//									actualWriter.write(str+"\n");
+//								}
+								
+//								missWriter.write(testSequences.get(sequences).Cog +"\n");
+//								String sequence = testSequences.get(sequences).sequence;
+//								String[] splitSeq = sequence.split("(?<=\\G.{70})");
+//								for(String str : splitSeq){
+//									missWriter.write(str+"\n");
+//								}
+								
+//								kdthit.add(sequences, test.nearest(coord).toString());
 							}
 							
 						} catch (KeySizeException | ArrayIndexOutOfBoundsException e) {
@@ -234,6 +385,20 @@ public class KDTOnlyMain {
 			executor.execute(r);
 		}
 		
+//		for(String key : classificationMap.keySet()){
+//			HashMap<String, Integer> valueMap = classificationMap.get(key);
+//			for(String key2 : valueMap.keySet()){
+//				classificationWriter.write(key.replaceAll(",", "")+","+key2.replaceAll(",", "")+","+valueMap.get(key2) + "\n");
+//			}
+//		}
+//		classificationWriter.close();
+//		BufferedWriter bw = new BufferedWriter(new FileWriter("3mer misses"));
+//		for(String ID : trainArray){
+//			bw.write(ID);
+//		}
+//		bw.close();
+//		missWriter.close();
+		
 		//  shutdown each thread as it finishes
 		executor.shutdown();
 		
@@ -241,7 +406,44 @@ public class KDTOnlyMain {
 		while(!executor.isTerminated()){
 			
 		}
-		
+//		String line2 = "";
+//		String sequence = "";
+//		String targetID = "";
+//		long pos = 0;
+//		int count2 = 0;
+//			while((line2 = trainReader.readLine()) != null){
+//				//  scan until there is a spot where the line is contained inside the AL
+//				if(trainArray.contains(line2)){
+//					//  print out the number of times this has been done
+//					System.out.println(count2);
+//					//  save the ID
+//					targetID = line2;
+//					//  get the sequence
+//					pos = trainReader.getFilePointer();
+//					while(!(line2 = trainReader.readLine()).contains(">") || line2 != null){
+//						
+//						sequence += line2;
+//						if(line2.contains(">")) break;
+//					}
+//					//  write the ID to the file
+//					actualWriter.write(targetID + "\n");
+//					// fix bug where it will grab the next ID
+//					sequence = sequence.split(">")[0];
+//					trainReader.seek(pos);
+//					trainReader.readLine();
+//					//  write the sequence to the file
+//					String[] splitSeq = sequence.split("(?<=\\G.{70})");
+//					for(String str : splitSeq){
+//						actualWriter.write(str+"\n");
+//					}
+//					
+//					//  reset the sequence and increment the count
+//					sequence = "";
+//					count2 ++;
+//				}
+//			}
+//		trainReader.close();
+//		actualWriter.close();
 		
 		double sum = 0;
 		for(double value : correctIDHit.values()){
@@ -264,16 +466,25 @@ public class KDTOnlyMain {
 			}
 		}
 		outfasta.close();
+		long testEnd = System.nanoTime();
+		System.out.println("Total time for testing: " + (testEnd - testStart));
+//		for(int i2 = 0; i2 < trainhit.size(); i2 ++){
+//			
+//			nmerWriter.write(trainhit.get(i2).replaceAll(",", "").replaceAll(";", "") +"," + kdthit.get(i2).replaceAll(",", "").replaceAll(";", "") +",\n");
+//			
+//		}
+//		nmerWriter.close();
 		
 		/**  END OF TESTING   **/
 		// print statistics
 		System.out.println("Hits: " + getHits());
 		System.out.println("Misclassified " + getMisses());
-		System.out.println("Nothing there" + getNothingThere());
+//		System.out.println("Nothing there" + getNothingThere());
 		System.out.println("Search Positive: " + getSearchPositive());
 		System.out.println("Search Negative: " + getSearchNegative());
-		System.out.println("in missed set: " + inSet);
-		System.out.println("not in missed set: " + outSet);
+//		System.out.println("in missed set: " + inSet);
+//		System.out.println("not in missed set: " + outSet);
+		
 	}
 
 	private static int getSearchNegative() {
@@ -643,7 +854,7 @@ public class KDTOnlyMain {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Vector<Gene> InputAndProcessGenesCategoryTest(File f) throws IOException{
+	public static Vector<Gene> InputAndProcessGenesCategoryTest(File f, int kmerToDo) throws IOException{
 		boolean first = true;
 		String sequence = "";
 		Vector<Gene> storage = new Vector<Gene>();
@@ -669,9 +880,10 @@ public class KDTOnlyMain {
 						continue;
 					}
 					sequence = replaceNucs(sequence);
+					String origSequence = sequence;
 					sequence = sequence.substring(60, sequence.length() - 2);
 					
-					storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo), sequence));
+					storage.add(new Gene(id, processSequencebyKmer(sequence, kmerToDo), origSequence));
 					count++;
 					
 					
@@ -704,7 +916,7 @@ public class KDTOnlyMain {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Vector<Gene> InputAndProcessGenesLine(File f, double[] xEQN, double[] yEQN ) throws IOException {
+	public static Vector<Gene> InputAndProcessGenesLine(File f, double[] xEQN, double[] yEQN , int kmerToDo) throws IOException {
 		boolean first = true;
 		String sequence = "";
 		Vector<Gene> storage = new Vector<Gene>();
@@ -736,7 +948,7 @@ public class KDTOnlyMain {
 		return id.substring(id.indexOf("peg.") + 4);
 	}
 
-	public static Vector<Gene> InputAndProcessGenes(File f) throws IOException {
+	public static Vector<Gene> InputAndProcessGenes(File f, int kmerToDo) throws IOException {
 		boolean first = true;
 		String sequence = "";
 		Vector<Gene> storage = new Vector<Gene>();

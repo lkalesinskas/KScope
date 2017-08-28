@@ -7,21 +7,28 @@ import java.util.List;
 
 import edu.wlu.cs.levy.CG.KDTree;
 
-public class TrainFeature implements TrainFile {
+public class TrainFeature {
 
-	@Override
-	public void train(KDTree test, int intersectionCount, BufferedReader br, List<double[]> equationList, int kmerToDo)
+	private int intersectionCount;
+
+	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo)
 			throws Exception {
 		String id = "";
 		String line = "";
-		HashMap<double[], HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
+//		HashMap<double[], HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
+		String[] arr = new String[0];
+		String[] coordArr = new String[0];
+		intersectionCount = 0;
 
 		while ((line = br.readLine()) != null) {
-
+//			System.out.println(line.length());
 			/** INSERTING INTO TREE OR STORAGE VECTOR **/
-			String[] arr = line.split(",");
+			arr = line.split("~~");
+//			System.out.println(arr.length);
+			coordArr = arr[0].split(",");
+//			System.out.println(coordArr.length);
 			// read all the coords from the feature file
-			String[] coordArr = Arrays.copyOfRange(arr, 0, arr.length - 1);
+//			String[] coordArr = Arrays.copyOfRange(arr, 0, arr.length - 1);
 			
 			//  turn the string coords into doubles
 			double[] coord = new double[coordArr.length];
@@ -29,55 +36,62 @@ public class TrainFeature implements TrainFile {
 				coord[i] = Double.valueOf(coordArr[i]);
 			}
 			//  get the ID from the feature file
-			id = arr[arr.length - 1];
+			id = arr[1];
 			
 			/** if a search at the coord yields nothing **/
 			if (test.search(coord) == null) {
 				test.insert(coord, id);
+//				System.out.println(test.size());
 				/** put into training data **/
 				// trainWriter.write(id+"\n");
 				// trainWriter.write(sequence+"\n");
 			} else if (test.search(coord) != null) {
+//				System.out.println("i am intersecting");
 				intersectionCount++;
 				/**
 				 * if intersection then write to the test file that will be
 				 * broken up into smaller 100k files later
 				 **/
-				if (sameMap.containsKey(coord)) {
-					HashMap<String, Integer> IDMap = sameMap.get(coord);
-					String targetID = test.search(coord).toString();
-					if (IDMap.containsKey(targetID)) {
-						IDMap.put(targetID, IDMap.get(targetID) + 1);
-					} else {
-						IDMap.put(targetID, 1);
-					}
-				} else {
-					sameMap.put(coord, new HashMap<String, Integer>());
-					sameMap.get(coord).put(test.search(coord).toString(), 1);
-				}
+//				if (sameMap.containsKey(coord)) {
+//					HashMap<String, Integer> IDMap = sameMap.get(coord);
+//					String targetID = test.search(coord).toString();
+//					if (IDMap.containsKey(targetID)) {
+//						IDMap.put(targetID, IDMap.get(targetID) + 1);
+//					} else {
+//						IDMap.put(targetID, 1);
+//					}
+//				} else {
+//					sameMap.put(coord, new HashMap<String, Integer>());
+//					sameMap.get(coord).put(test.search(coord).toString(), 1);
+//				}
 
 			}
+//			System.gc();
 		}
 		System.out.println("finished initial tree inserts");
 		System.gc();
 		System.out.println("beginning secondary tree inserts");
-
+		
 		// go through sameMap and make the most popular part of the tree.
 		// eliminate less popular
-		for (double[] coords : sameMap.keySet()) {
-			HashMap<String, Integer> IDMap = sameMap.get(coords);
-			int max = 1;
-			String maxString = "";
-			for (String key : IDMap.keySet()) {
-				if (IDMap.get(key) > max) {
-					max = IDMap.get(key);
-					maxString = key;
-				}
-			}
-			if (max > 1 && !maxString.equals("")) {
-				test.insert(coords, maxString);
-			}
-		}
+//		for (double[] coords : sameMap.keySet()) {
+//			HashMap<String, Integer> IDMap = sameMap.get(coords);
+//			int max = 1;
+//			String maxString = "";
+//			for (String key : IDMap.keySet()) {
+//				if (IDMap.get(key) > max) {
+//					max = IDMap.get(key);
+//					maxString = key;
+//				}
+//			}
+//			if (max > 1 && !maxString.equals("")) {
+//				test.insert(coords, maxString);
+//			}
+//		}
+	}
+	
+	public int getIntersectionCount(){
+		return this.intersectionCount;
 	}
 
 }
