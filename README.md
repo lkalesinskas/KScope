@@ -1,4 +1,13 @@
 <h1>KScope</h1>
+<h2>Breakdown</h2>
+
+* Run Sequence Analysis on your genes.
+
+* Quick classification of a large metagenomic set
+
+* Faster than BLASTing due to useage and storage inside of RAM
+
+* Uses Principle Component Analysis (PCA) to analyze the importance of kmers
 
 <h2>Usage</h2>
 
