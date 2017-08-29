@@ -52,3 +52,6 @@ the kmer count you wish to use
 
 <h3>-help</h3>
 display this message
+
+<h1>Questions? Problems?</h1>
+email: maxrkelly@gmail.com
