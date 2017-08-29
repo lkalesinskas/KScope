@@ -53,5 +53,8 @@ the kmer count you wish to use
 <h3>-help</h3>
 display this message
 
+<h1>Files</h1>
+[link](https://drive.google.com/open?id=0B81VTJn7f64-Ukg5bWVxeFlfa28)
+
 <h1>Questions? Problems?</h1>
 email: maxrkelly@gmail.com
