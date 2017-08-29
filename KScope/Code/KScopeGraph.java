@@ -1,4 +1,4 @@
-package KScope;
+package KScope.Code;
 
 import static com.metsci.glimpse.axis.tagged.Tag.TEX_COORD_ATTR;
 

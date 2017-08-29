@@ -1,4 +1,4 @@
-package KScope;
+package KScope.Code;
 
 
 public class Gene {

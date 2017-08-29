@@ -25,7 +25,7 @@
 **
 *******************************************************************************/
 
-package KScope;
+package KScope.Code;
 
 /**
  * Implements common discrete Shannon Entropy functions.

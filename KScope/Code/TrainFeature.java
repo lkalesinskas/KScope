@@ -1,4 +1,4 @@
-package KScope;
+package KScope.Code;
 
 import java.io.BufferedReader;
 import java.util.Arrays;

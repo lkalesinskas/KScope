@@ -1,4 +1,4 @@
-package KScope;
+package KScope.Code;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

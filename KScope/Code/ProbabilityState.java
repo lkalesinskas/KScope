@@ -25,7 +25,7 @@
 **
 *******************************************************************************/
 
-package KScope;
+package KScope.Code;
 
 import java.util.HashMap;
 import java.util.Set;

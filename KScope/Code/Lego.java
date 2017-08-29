@@ -1,4 +1,4 @@
-package KScope;
+package KScope.Code;
 
 import java.sql.Connection;
 import java.util.Vector;
