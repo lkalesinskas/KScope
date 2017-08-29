@@ -12,7 +12,6 @@ public class CommandLineMain {
 	public static void main(String[] args) throws Exception{
 		//  adding options
 		Options options = new Options();
-//		options.addOption("ram", true, "<arg> must be either t or f.  If the value is 't' then this will execute in RAM only mode otherwise it will execute the DB main.  Suggest DB used on machines with lower RAM");
 		options.addOption("pca", true, "The file containing the PCA equations to be parsed");
 		options.addOption("trainin", true, "The path and name of the FASTA or FEATURE file that will be used to train the KDT");
 		options.addOption("testin", true, "the path and name of the FASTA file that will be parsed and tested against the KDT");
@@ -32,13 +31,6 @@ public class CommandLineMain {
 				System.exit(1);
 			}
 			
-//			else if(line.hasOption("fastatofeature")){
-//				
-//				FastaToFeatureFile.fastaToFeature(line.getOptionValue("fastatofeature"), line.getOptionValue("pca"), Integer.valueOf(line.getOptionValue("kmer")));
-//				System.exit(2);
-//			}
-			
-//			else if(line.getOptionValue("ram").equals("t")){
 				String pca = line.getOptionValue("pca");
 				String testin = line.getOptionValue("testin");
 				String trainin = line.getOptionValue("trainin");
@@ -55,23 +47,6 @@ public class CommandLineMain {
 						kmer,
 						fastatofeature
 				);
-//			}
-//			else if(line.getOptionValue("ram").equals("f")){
-//				String pca = line.getOptionValue("pca");
-//				String testin = line.getOptionValue("testin");
-//				String trainin = line.getOptionValue("trainin");
-//				String out = line.getOptionValue("out");
-//				boolean train = line.hasOption("traindb") ? true : false;
-//				int numthread = Integer.parseInt(line.getOptionValue("numthread"));
-//				DBMain.execute(
-//						pca,
-//						testin,
-//						trainin,
-//						out,
-//						train,
-//						numthread
-//				);
-//			}
 		}catch(Exception e){
 			HelpFormatter formatter = new HelpFormatter();
 			  

@@ -151,7 +151,7 @@ public class KDTOnlyMain {
 		//  thread pool.
 		ExecutorService executor = Executors.newFixedThreadPool(numthread);
 //		for(int sequences = 0; sequences < testSequences.size(); sequences ++){
-		for(int runs = 0; runs < 100000 / q; runs ++){
+		for(int runs = 0; runs < testSequences.size() / q; runs ++){
 			final int runs3 = runs;
 			Runnable r = new Runnable(){
 				public void run(){
@@ -451,9 +451,9 @@ public class KDTOnlyMain {
 		}
 		//  writing summary file
 		BufferedWriter summaryWriter = new BufferedWriter(new FileWriter("Summary.csv"));
-		summaryWriter.write("Function ID, Percentage Used (in decimal),\n");
+		summaryWriter.write("Function ID, Percentage Used (in decimal), Number of hits,\n");
 		for(String key : correctIDHit.keySet()){
-			summaryWriter.write(key.replaceAll(",", "")+","+ (correctIDHit.get(key) / sum) +"\n");
+			summaryWriter.write(key.replaceAll(",", "")+","+ (correctIDHit.get(key) / sum) + ","+ correctIDHit.get(key) + "," +"\n");
 		}
 		summaryWriter.close();
 		
@@ -888,10 +888,10 @@ public class KDTOnlyMain {
 					
 					
 					
-					 if (count>100000) {
-//					if (count > 1000) {
-						break;
-					}
+//					 if (count>1000000) {
+////					if (count > 1000) {
+//						break;
+//					}
 					id = line;
 					sequence = "";
 				}
