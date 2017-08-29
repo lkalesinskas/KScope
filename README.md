@@ -14,7 +14,7 @@
 The command line call should look something like the following:
 
 ```bash
-java -jar KScopeJAR.jar -fastatofeature f -pca spanPCA -testin testOut6.fasta -trainin trainOut6.fasta -out outfile.fasta -numthread 10 -kmer 4
+java -jar KScopeJAR.jar -fastatofeature f -pca spanPCA -testin testOut6.fasta -trainin trainOut6.fasta -out outfile3mer.fasta -numthread 10 -kmer 3
 ```
 
 <h3>-fastatofeature</h3>
