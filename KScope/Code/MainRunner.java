@@ -7,7 +7,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-public class CommandLineMain {
+public class MainRunner {
 	
 	public static void main(String[] args) throws Exception{
 		//  adding options
