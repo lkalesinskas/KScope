@@ -90,7 +90,7 @@ public class KDTOnlyMain {
 					trainer.train(test, br, equationList, kmer);
 					intersectionCount = trainer.getIntersectionCount();
 				} 
-				else if(trainLine.contains(">") && trainLine.charAt(0) == '>' && trainReader.readLine().length() == 70){
+				else if(trainLine.contains(">") && trainLine.charAt(0) == '>' && trainReader.readLine().length() <= 70){
 					TrainFasta trainer = new TrainFasta();
 					trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
 					intersectionCount = trainer.getIntersectionCount();
