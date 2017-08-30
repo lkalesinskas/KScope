@@ -115,9 +115,15 @@ public class KDTOnlyMain {
 
 			BufferedReader testReader = new BufferedReader(new FileReader(TestFile));
 			String testLine = testReader.readLine();
-			if(testLine.charAt(0)!='>'){
-				throw new IOException();
-			}
+			try{
+				if(testLine.charAt(0)!='>'){
+					throw new IOException();
+				}
+			}catch(NullPointerException e1){
+					System.out.println("Please make sure there are contents in the file and that the file exists");
+					System.exit(15);
+				}
+
 			testReader.close();
 			File testFile = new File(TestFile);
 
@@ -257,9 +263,11 @@ public class KDTOnlyMain {
 								if (e instanceof ArrayIndexOutOfBoundsException) {
 									break;
 								} else if (e instanceof NullPointerException) {
-									e.printStackTrace();
 									continue;
-								} else {
+								}else if (e instanceof KeySizeException){
+									System.out.println("Please make sure the dimensions are the same");
+									System.exit(16);
+								}else{
 									e.printStackTrace();
 								}
 							}
@@ -317,9 +325,8 @@ public class KDTOnlyMain {
 		} catch (IOException e1) {
 			System.out.println(
 					"Please make sure you are inputting either a FASTA or FEATURE file as training and a FASTA file as testing");
-			e1.printStackTrace();
-		}
-
+			System.exit(16);
+		} 
 	}
 
 	private static int getSearchNegative() {
