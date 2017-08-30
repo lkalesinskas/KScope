@@ -3,10 +3,13 @@ package KScope.Code;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
 import edu.wlu.cs.levy.CG.KDTree;
+import edu.wlu.cs.levy.CG.KeyDuplicateException;
+import edu.wlu.cs.levy.CG.KeySizeException;
 
 public class TrainFasta {
 	
@@ -16,7 +19,7 @@ public class TrainFasta {
 		return this.intersectionCount;
 	}
 
-	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo, boolean fastatofeature, String TrainFile) throws Exception{
+	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo, boolean fastatofeature, String TrainFile){
 		String line = "";
 		String id = "";
 		String sequence = "";
@@ -24,7 +27,10 @@ public class TrainFasta {
 		int count = 0;
 		intersectionCount = 0;
 		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
-		BufferedWriter bw = new BufferedWriter(new FileWriter(TrainFile+".feature"));
+		BufferedWriter bw;
+		try {
+			bw = new BufferedWriter(new FileWriter(TrainFile+".feature"));
+		
 		if(fastatofeature) System.out.println("converting to feature file");
 		
 		/**  the writers for train and test out that will be used for the spanning set   **/
@@ -118,8 +124,9 @@ public class TrainFasta {
 		}
 		
 		bw.close();
+		
 		if(fastatofeature) System.out.println("done converting");
-
+		if(fastatofeature) System.exit(1);
 /**   TREE/STORAGE VECTOR INSERTIONS FINISHED   **/
 			System.out.println("finished initial tree inserts");
 			System.gc();
@@ -140,6 +147,22 @@ public class TrainFasta {
 					test.insert(coords, maxString);
 				}
 			}
+			
+		} catch (IOException | KeySizeException | KeyDuplicateException e) {
+			// TODO Auto-generated catch block
+			if(e instanceof IOException){
+				System.err.println("Error in reading file.  Please make sure file is of FASTA format");
+				System.exit(3);
+			}
+			else if(e instanceof KeySizeException){
+				System.err.println("Please make sure your dimensions in your PCA file are all of the same size");
+				System.exit(4);
+			}
+			else if(e instanceof KeyDuplicateException){
+				System.err.println("Values are already included in tree.  Please try again.");
+				System.exit(5);
+			}
+		}
 	}
 
 }

@@ -9,21 +9,24 @@ import org.apache.commons.cli.ParseException;
 
 public class MainRunner {
 	
-	public static void main(String[] args) throws Exception{
+	public static void main(String[] args) {
 		//  adding options
 		Options options = new Options();
-		options.addOption("pca", true, "The file containing the PCA equations to be parsed");
+		options.addOption("pca", true, "The file path and name of the file containing the PCA equations to be parsed");
 		options.addOption("trainin", true, "The path and name of the FASTA or FEATURE file that will be used to train the KDT");
 		options.addOption("testin", true, "the path and name of the FASTA file that will be parsed and tested against the KDT");
 		options.addOption("out", true, "the path and name of the FASTA file output by the program");
 		options.addOption("traindb", "if you wish to use the training file to train the database.  Do not include this option if your database has already been trained.");
 		options.addOption("numthread", true, "the number of threads you wish to use for this task");
-		options.addOption("fastatofeature", true, "if you wish to turn a FASTA file into a FEATURE file.  You will need to supply a PCA file using the -pca command and the number of kmers using the -kmer command to run properly.  You will then need to rerun the program with your new FEATURE file. <arg> must be your FASTA file");
+		options.addOption("fastatofeature", true, "if you wish to turn a FASTA file into a FEATURE file.  The acceptable input is either t or f where t will turn into a FEATURE file");
 		options.addOption("kmer",true,"the kmer count you wish to use");
 		options.addOption("help", "print this message");
 		CommandLineParser parser = new DefaultParser();
-		try{
-			CommandLine line = parser.parse(options, args);
+		
+			CommandLine line;
+			try {
+				line = parser.parse(options, args);
+			
 		
 			if(line.hasOption("help")){
 				HelpFormatter formatter = new HelpFormatter();
@@ -47,13 +50,17 @@ public class MainRunner {
 						kmer,
 						fastatofeature
 				);
-		}catch(Exception e){
-			HelpFormatter formatter = new HelpFormatter();
-			  
-			formatter.printHelp("please include all of the following in your command line", options);
-			e.printStackTrace();
-		}
 		
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				HelpFormatter formatter = new HelpFormatter();
+				
+				formatter.printHelp("Please include all of the following in your command line", options);
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		
 	}
 
