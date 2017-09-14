@@ -198,7 +198,7 @@ public class KDTOnlyMain {
 										// input the sequence for the out file
 										// and summary file
 										if (!outFastaSequenceMap.containsKey(targetSequence))
-											outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
+											outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString() + " | " + testSequences.get(sequences).Cog);
 										if (correctIDHit.containsKey(test.nearest(coord).toString())) {
 											correctIDHit.put(test.nearest(coord).toString(),
 													correctIDHit.get(test.nearest(coord).toString()) + 1);
@@ -235,7 +235,7 @@ public class KDTOnlyMain {
 									// input the sequence for the out file and
 									// summary file
 									if (!outFastaSequenceMap.containsKey(targetSequence))
-										outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString());
+										outFastaSequenceMap.put(targetSequence, test.nearest(coord).toString() +" | " + testSequences.get(sequences).Cog);
 									if (correctIDHit.containsKey(test.nearest(coord).toString())) {
 										String target = test.nearest(coord).toString();
 										correctIDHit.put(target, correctIDHit.get(target) + 1);
@@ -313,10 +313,15 @@ public class KDTOnlyMain {
 
 			/** END OF TESTING **/
 			// print statistics
+			BufferedWriter logWriter = new BufferedWriter(new FileWriter("log.txt"));
 			System.out.println("Hits: " + getHits());
+			logWriter.write("Hits: " + getHits());
 			System.out.println("Misclassified " + getMisses());
+			logWriter.write("Misclassified " + getMisses());
 			System.out.println("Search Positive: " + getSearchPositive());
+			logWriter.write("Search Positive: " + getSearchPositive());
 			System.out.println("Search Negative: " + getSearchNegative());
+			logWriter.write("Search Negative: " + getSearchNegative());
 
 		} catch (FileNotFoundException e1) {
 			System.out.println("Please make sure the file exists");
