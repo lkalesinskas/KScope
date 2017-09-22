@@ -90,8 +90,8 @@ public class KDTOnlyMain {
 					TrainFeature trainer = new TrainFeature();
 					trainer.train(test, br, equationList, kmer);
 					intersectionCount = trainer.getIntersectionCount();
-				} 
-				else if(trainLine.contains(">") && trainLine.charAt(0) == '>'){
+				}
+				if(trainLine.contains(">") && trainLine.charAt(0) == '>'){
 					TrainFasta trainer = new TrainFasta();
 					trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
 					intersectionCount = trainer.getIntersectionCount();
@@ -99,10 +99,16 @@ public class KDTOnlyMain {
 					throw new IOException();
 				}
 			} catch (NumberFormatException y) {
-				System.out.println("Not a supported File type");
-				System.exit(14);
+				if(trainLine.contains(">") && trainLine.charAt(0) == '>'){
+					TrainFasta trainer = new TrainFasta();
+					trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
+					intersectionCount = trainer.getIntersectionCount();
+				}
+				else{
+					throw new IOException();
+				}
 			} catch (NullPointerException e2){
-				System.out.println("Please make sure there is data in the file and they are formatted correctly");
+				System.err.println("Please make sure there is data in the file and they are formatted correctly");
 				System.exit(15);
 			}
 			trainReader.close();
@@ -325,11 +331,11 @@ public class KDTOnlyMain {
 			logWriter.write("Search Negative: " + getSearchNegative());
 
 		} catch (FileNotFoundException e1) {
-			System.out.println("Please make sure the file exists");
+			System.err.println("Please make sure the file exists");
 			System.exit(10);
 
 		} catch (IOException e1) {
-			System.out.println(
+			System.err.println(
 					"Please make sure you are inputting either a FASTA or FEATURE file as training and a FASTA file as testing");
 			System.exit(16);
 		} 

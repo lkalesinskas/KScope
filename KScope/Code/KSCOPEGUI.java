@@ -65,7 +65,7 @@ public class KSCOPEGUI {
                 choosed.setCurrentDirectory(workingDirectory);
                 int returnValue = choosed.showOpenDialog(null); 
                 if (returnValue == JFileChooser.APPROVE_OPTION) { 
-                     trainIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\\\")); 
+                     trainIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\")); 
                 } 
 			}
 			
@@ -80,7 +80,7 @@ public class KSCOPEGUI {
                 choosed.setCurrentDirectory(workingDirectory);
                 int returnValue = choosed.showOpenDialog(null); 
                 if (returnValue == JFileChooser.APPROVE_OPTION) { 
-                     testIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\\\")); 
+                     testIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\")); 
                 } 
 			}
 			
@@ -95,7 +95,7 @@ public class KSCOPEGUI {
                 choosed.setCurrentDirectory(workingDirectory);
                 int returnValue = choosed.showOpenDialog(null); 
                 if (returnValue == JFileChooser.APPROVE_OPTION) { 
-                     pcaIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\\\")); 
+                     pcaIn.setText(choosed.getSelectedFile().getPath().replace("\\", "\\")); 
                 } 
 			}
 			
@@ -115,10 +115,10 @@ public class KSCOPEGUI {
 				int numthread = Integer.parseInt(threadCount.getText());
 				int kmer = Integer.parseInt(kmerCount.getText());
 				boolean fastatofeature = fastaToFeatureCheckBox.isSelected();
-				Thread t = new Thread(new Runnable(){
-
-					@Override
-					public void run() {
+//				Thread t = new Thread(new Runnable(){
+//
+//					@Override
+//					public void run() {
 						KDTOnlyMain.execute(
 								pca,
 								testin,
@@ -128,10 +128,10 @@ public class KSCOPEGUI {
 								kmer,
 								fastatofeature
 						);
-					}
-					
-				});
-				t.start();
+//					}
+//					
+//				});
+//				t.start();
 				
 				goButton.setEnabled(true);
 			}
@@ -189,8 +189,8 @@ public class KSCOPEGUI {
 		frame.getContentPane().add(panel);
 		
 		
-		System.setOut(out);
-		System.setErr(out);
+//		System.setOut(out);
+//		System.setErr(out);
 		//  jframe close ops
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);

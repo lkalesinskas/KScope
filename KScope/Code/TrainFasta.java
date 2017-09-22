@@ -36,7 +36,7 @@ public class TrainFasta {
 		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
 		
 		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(""));
+			BufferedWriter bw = new BufferedWriter(new FileWriter("test"));
 		if(fastatofeature){
 			bw = new BufferedWriter(new FileWriter(TrainFile+".feature"));
 		}
@@ -164,7 +164,9 @@ public class TrainFasta {
 		} catch (IOException | KeySizeException | KeyDuplicateException e) {
 			// TODO Auto-generated catch block
 			if(e instanceof IOException){
+				System.err.println("file name: "+TrainFile);
 				System.err.println("Error in reading file.  Please make sure file is of FASTA format");
+				e.printStackTrace();
 				System.exit(3);
 			}
 			else if(e instanceof KeySizeException){

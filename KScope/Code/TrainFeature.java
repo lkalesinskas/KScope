@@ -93,16 +93,16 @@ public class TrainFeature {
 			System.err.println("Please make sure that you are inputting a number as a dimension");
 			System.exit(6);
 		} catch (KeySizeException e) {
-			System.out.println("Please make sure your dimensions are of the same size");
+			System.err.println("Please make sure your dimensions are of the same size");
 			System.exit(7);
 		} catch (KeyDuplicateException e) {
-			System.out.println("Already in the tree");
+			System.err.println("Already in the tree");
 			System.exit(8);
 		} catch (IOException e) {
-			System.out.println("Please make sure that the file exists and is of type FEATURE");
+			System.err.println("Please make sure that the file exists and is of type FEATURE");
 			System.exit(9);
 		} catch (FontFormatException e) {
-			System.out.println("Please make sure the file is formatted correctly.  The FEATURE file should have your dimensions separated by commas and the ID separated by ~~");
+			System.err.println("Please make sure the file is formatted correctly.  The FEATURE file should have your dimensions separated by commas and the ID separated by ~~");
 			System.exit(11);
 		}
 	}
