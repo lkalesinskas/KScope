@@ -20,13 +20,7 @@ public class TrainFasta {
 	}
 
 	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo, boolean fastatofeature, String TrainFile){
-		Thread t = new Thread(new Runnable(){
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
 				
-			
 		String line = "";
 		String id = "";
 		String sequence = "";
@@ -179,10 +173,9 @@ public class TrainFasta {
 			}
 		}
 		
-}
+
 			
-		});
-		t.start();
+		
 	}
 
 }

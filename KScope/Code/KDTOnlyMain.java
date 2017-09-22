@@ -86,16 +86,18 @@ public class KDTOnlyMain {
 			int intersectionCount = 0;
 			try {
 				
+				if(trainLine.contains(">") && trainLine.charAt(0) == '>'){
+					TrainFasta trainer = new TrainFasta();
+					trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
+					intersectionCount = trainer.getIntersectionCount();
+				}
+				
 				if (Double.valueOf(trainLine.split(",")[0]) != null && trainLine.contains("~~")) {
 					TrainFeature trainer = new TrainFeature();
 					trainer.train(test, br, equationList, kmer);
 					intersectionCount = trainer.getIntersectionCount();
 				}
-				if(trainLine.contains(">") && trainLine.charAt(0) == '>'){
-					TrainFasta trainer = new TrainFasta();
-					trainer.train(test, br, equationList, kmer, fastatofeature, TrainFile);
-					intersectionCount = trainer.getIntersectionCount();
-				}else {
+				else {
 					throw new IOException();
 				}
 			} catch (NumberFormatException y) {
@@ -127,7 +129,7 @@ public class KDTOnlyMain {
 					throw new IOException();
 				}
 			}catch(NullPointerException e1){
-					System.out.println("Please make sure there are contents in the file and that the file exists");
+					System.err.println("Please make sure there are contents in the file and that the file exists");
 					System.exit(15);
 				}
 
