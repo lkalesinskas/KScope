@@ -82,6 +82,7 @@ public class KDTOnlyMain {
 			}
 			BufferedReader trainReader = new BufferedReader(new FileReader(TrainFile));
 			String trainLine = trainReader.readLine();
+			
 			int intersectionCount = 0;
 			try {
 				

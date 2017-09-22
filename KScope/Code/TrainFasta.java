@@ -20,6 +20,13 @@ public class TrainFasta {
 	}
 
 	public void train(KDTree test, BufferedReader br, List<double[]> equationList, int kmerToDo, boolean fastatofeature, String TrainFile){
+		Thread t = new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				
+			
 		String line = "";
 		String id = "";
 		String sequence = "";
@@ -27,11 +34,17 @@ public class TrainFasta {
 		int count = 0;
 		intersectionCount = 0;
 		HashMap<double[],HashMap<String, Integer>> sameMap = new HashMap<double[], HashMap<String, Integer>>();
-		BufferedWriter bw;
+		
 		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(""));
+		if(fastatofeature){
 			bw = new BufferedWriter(new FileWriter(TrainFile+".feature"));
+		}
 		
 		if(fastatofeature) System.out.println("converting to feature file");
+		
+				
+			
 		
 		/**  the writers for train and test out that will be used for the spanning set   **/
 		while( (line = br.readLine()) != null){
@@ -122,7 +135,7 @@ public class TrainFasta {
 				sequence += line;
 			}
 		}
-		
+
 		bw.close();
 		
 		if(fastatofeature) System.out.println("done converting");
@@ -163,6 +176,11 @@ public class TrainFasta {
 				System.exit(5);
 			}
 		}
+		
+}
+			
+		});
+		t.start();
 	}
 
 }

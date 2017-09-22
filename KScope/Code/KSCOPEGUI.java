@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -35,8 +36,6 @@ public class KSCOPEGUI {
 		JPanel southPanel = new JPanel();
 		JLabel kmerLabel = new JLabel("Kmer Count");
 		JLabel threadLabel = new JLabel("Thread Count");
-		JLabel fastaToFeatureLabel = new JLabel("Convert to Feature File");
-		JLabel outfile = new JLabel("Name of Output Fasta File");
 		JCheckBox fastaToFeatureCheckBox = new JCheckBox();
 		JTextField kmerCount = new JTextField(20);
 		JTextField trainIn = new JTextField(20);
@@ -160,20 +159,34 @@ public class KSCOPEGUI {
 		northPanel.add(northEastPanel, BorderLayout.EAST);
 		
 		northWestPanel.add(trainButton);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(trainIn);
+		northEastPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northWestPanel.add(testButton);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(testIn);
+		northEastPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northWestPanel.add(pcaButton);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(pcaIn);
+		northEastPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northWestPanel.add(kmerLabel);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(kmerCount);
+		northEastPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northWestPanel.add(threadLabel);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(threadCount);
-		northWestPanel.add(outfile);
+		northEastPanel.add(Box.createRigidArea(new Dimension(0,15)));
 		northEastPanel.add(outFileName);
+		
+		JLabel outfile = new JLabel("Name of Output Fasta File");
+		northWestPanel.add(outfile);
+		northWestPanel.add(Box.createRigidArea(new Dimension(0,15)));
+		JLabel fastaToFeatureLabel = new JLabel("Convert to Feature File");
 		northWestPanel.add(fastaToFeatureLabel);
 		northEastPanel.add(fastaToFeatureCheckBox);
-		frame.add(panel);
+		frame.getContentPane().add(panel);
 		
 		
 		System.setOut(out);
