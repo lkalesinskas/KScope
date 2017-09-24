@@ -164,8 +164,6 @@ public class KDTOnlyMain {
 												// or 1
 							if (sequences % 10000 == 0)
 								System.out.println("Currently testing sequence " + sequences);
-							// trainhit.add(sequences,
-							// testSequences.get(sequences).Cog);
 							try {
 
 								double[] gene = testSequences.get(sequences).kmerVector.clone();
@@ -324,14 +322,15 @@ public class KDTOnlyMain {
 			// print statistics
 			BufferedWriter logWriter = new BufferedWriter(new FileWriter("log.txt"));
 			System.out.println("Hits: " + getHits());
-			logWriter.write("Hits: " + getHits());
+			logWriter.write("Hits: " + getHits()+ "\n");
 			System.out.println("Misclassified " + getMisses());
-			logWriter.write("Misclassified " + getMisses());
+			logWriter.write(" \nMisclassified " + getMisses() + " \n");
 			System.out.println("Search Positive: " + getSearchPositive());
-			logWriter.write("Search Positive: " + getSearchPositive());
-			System.out.println("Search Negative: " + getSearchNegative());
-			logWriter.write("Search Negative: " + getSearchNegative());
+			logWriter.write(" \nSearch Positive: " + getSearchPositive() + " \n");
+			System.out.println("Search Negative: " + getSearchNegative() );
+			logWriter.write(" \nSearch Negative: " + getSearchNegative() + " \n");
 
+			logWriter.close();
 		} catch (FileNotFoundException e1) {
 			System.err.println("Please make sure the file exists");
 			System.exit(10);

@@ -27,7 +27,7 @@ public class TrainFeature {
 			while ((line = br.readLine()) != null) {
 				/** INSERTING INTO TREE OR STORAGE VECTOR **/
 				// read all the coords from the feature file
-				if(line.contains("~~")){
+				if(!line.contains("~~")){
 					throw new FontFormatException(line);
 				}
 				arr = line.split("~~");
@@ -70,7 +70,7 @@ public class TrainFeature {
 		
 		System.out.println("finished initial tree inserts");
 		System.gc();
-		System.out.println("beginning secondary tree inserts");
+		System.out.println("optimizing tree inserts");
 		
 		// go through sameMap and make the most popular part of the tree.
 		// eliminate less popular

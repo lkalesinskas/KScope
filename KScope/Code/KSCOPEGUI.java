@@ -189,8 +189,8 @@ public class KSCOPEGUI {
 		frame.getContentPane().add(panel);
 		
 		
-//		System.setOut(out);
-//		System.setErr(out);
+		System.setOut(out);
+		System.setErr(out);
 		//  jframe close ops
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
@@ -209,7 +209,7 @@ class Console extends JTextArea {
 				BorderFactory.createLoweredBevelBorder(), "Console");
 		border.setTitleJustification(TitledBorder.LEFT);
 		this.setBorder(border);
-		this.setPreferredSize(new Dimension(145, 100));
+		this.setPreferredSize(new Dimension(145, 200));
 		
 
 	}
