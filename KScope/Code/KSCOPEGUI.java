@@ -48,13 +48,10 @@ public class KSCOPEGUI {
 		JButton pcaButton = new JButton("PCA File");
 		JButton goButton = new JButton("GO");
 		Console console = new Console();
-		JTextArea textarea = new JTextArea();
-		JScrollPane scroll = new JScrollPane(textarea);
-		PrintStream out = new PrintStream(new TextAreaOutputStream(textarea));
-		textarea.setPreferredSize(new Dimension(145,200));
+		JScrollPane scroll = new JScrollPane(console);
+		PrintStream out = new PrintStream(new TextAreaOutputStream(console));
 		
 		trainButton.setEnabled(true);
-//		trainButton.setSize(150, 25);
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		
 		//  button action listeners
@@ -108,9 +105,8 @@ public class KSCOPEGUI {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				goButton.setEnabled(false);
-//				console.setText("");
-				textarea.setText("");
-//				System.out.println("testing\nt\nt\nt\nt\nt\nt\nt\nt");
+				console.setText("");
+				try{
 				String pca = pcaIn.getText();
 				String testin = testIn.getText();
 				String trainin = trainIn.getText();
@@ -122,21 +118,6 @@ public class KSCOPEGUI {
 //
 					@Override
 					public void run() {
-//				-fastatofeature f
-//				-pca spanPCA
-//				-testin testOut6.fasta
-//				-trainin trainOut6.fasta.feature
-//				-out outfile3mer.fasta
-//				-numthread 10
-//				-kmer 3
-//				Runtime r = Runtime.getRuntime();
-//				try {
-//					Process p = r.exec("java -jar D:\\Larry Projects\\KSCOPE\\KScope2\\src\\KScope\\release\\KScope.jar -fastatofeature f -pca spanPCA -testin testOut6.fasta "
-//							+ "-trainin trainOut6.fasta.feature -out outfile3mer.fasta -numthread 10 -kmer 3");
-//				} catch (IOException e1) {
-//					// TODO Auto-generated catch block
-//					e1.printStackTrace();
-//				}
 				
 						KDTOnlyMain.execute(
 								pca,
@@ -151,7 +132,9 @@ public class KSCOPEGUI {
 					
 				});
 				t.start();
-				
+				}catch(NumberFormatException ex){
+					System.err.println("Make sure you are using a number");
+				}
 				goButton.setEnabled(true);
 			}
 			
@@ -228,7 +211,7 @@ class Console extends JTextArea {
 				BorderFactory.createLoweredBevelBorder(), "Console");
 		border.setTitleJustification(TitledBorder.LEFT);
 		this.setBorder(border);
-//		this.setPreferredSize(new Dimension(145, 200));
+		this.setPreferredSize(new Dimension(145, 200));
 		
 
 	}
