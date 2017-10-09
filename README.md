@@ -11,12 +11,16 @@
 
 <h2>Usage</h2>
 
+<h3>KScopeGUI.jar</h3>
 The command line call should look something like the following:
 
 ```bash
 java -jar KScopeJAR.jar -fastatofeature f -pca spanPCA -testin testOut6.fasta -trainin trainOut6.fasta -out outfile3mer.fasta -numthread 10 -kmer 3
 ```
+<h3>KScopeJARGUI.jar</h3>
+Double click to run.  Make sure you have all files required.
 
+<h2>Command Line Arguments</h2>
 <h3>-fastatofeature</h3>
 
 t/f where t will turn the supplied file with the -trainin command and turn it into a feature file
