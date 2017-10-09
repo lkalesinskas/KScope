@@ -48,8 +48,10 @@ public class KSCOPEGUI {
 		JButton pcaButton = new JButton("PCA File");
 		JButton goButton = new JButton("GO");
 		Console console = new Console();
-		JScrollPane scroll = new JScrollPane(console);
-		PrintStream out = new PrintStream(new TextAreaOutputStream(console));
+		JTextArea textarea = new JTextArea();
+		JScrollPane scroll = new JScrollPane(textarea);
+		PrintStream out = new PrintStream(new TextAreaOutputStream(textarea));
+		textarea.setPreferredSize(new Dimension(145,200));
 		
 		trainButton.setEnabled(true);
 //		trainButton.setSize(150, 25);
@@ -106,7 +108,8 @@ public class KSCOPEGUI {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				goButton.setEnabled(false);
-				console.setText("");
+//				console.setText("");
+				textarea.setText("");
 //				System.out.println("testing\nt\nt\nt\nt\nt\nt\nt\nt");
 				String pca = pcaIn.getText();
 				String testin = testIn.getText();
@@ -115,10 +118,26 @@ public class KSCOPEGUI {
 				int numthread = Integer.parseInt(threadCount.getText());
 				int kmer = Integer.parseInt(kmerCount.getText());
 				boolean fastatofeature = fastaToFeatureCheckBox.isSelected();
-//				Thread t = new Thread(new Runnable(){
+				Thread t = new Thread(new Runnable(){
 //
-//					@Override
-//					public void run() {
+					@Override
+					public void run() {
+//				-fastatofeature f
+//				-pca spanPCA
+//				-testin testOut6.fasta
+//				-trainin trainOut6.fasta.feature
+//				-out outfile3mer.fasta
+//				-numthread 10
+//				-kmer 3
+//				Runtime r = Runtime.getRuntime();
+//				try {
+//					Process p = r.exec("java -jar D:\\Larry Projects\\KSCOPE\\KScope2\\src\\KScope\\release\\KScope.jar -fastatofeature f -pca spanPCA -testin testOut6.fasta "
+//							+ "-trainin trainOut6.fasta.feature -out outfile3mer.fasta -numthread 10 -kmer 3");
+//				} catch (IOException e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
+				
 						KDTOnlyMain.execute(
 								pca,
 								testin,
@@ -128,10 +147,10 @@ public class KSCOPEGUI {
 								kmer,
 								fastatofeature
 						);
-//					}
-//					
-//				});
-//				t.start();
+					}
+					
+				});
+				t.start();
 				
 				goButton.setEnabled(true);
 			}
@@ -209,7 +228,7 @@ class Console extends JTextArea {
 				BorderFactory.createLoweredBevelBorder(), "Console");
 		border.setTitleJustification(TitledBorder.LEFT);
 		this.setBorder(border);
-		this.setPreferredSize(new Dimension(145, 200));
+//		this.setPreferredSize(new Dimension(145, 200));
 		
 
 	}
